@@ -420,8 +420,8 @@ const CartFooter = ({ cart, toggleCart }: { cart: any[], toggleCart: () => void 
 
 const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], onClose: () => void, updateQuantity: (name: string, options: any, delta: number) => void, clearCart: () => void }) => {
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-30 z-40" onClick={onClose}>
-            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-40 flex items-end bg-gray-200 bg-opacity-30" onClick={onClose}>
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[50vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="font-bold text-lg">已选购商品</h3>
                     <button onClick={clearCart} className="text-sm text-gray-500 flex items-center"><Trash2 className="w-4 h-4 mr-1" />清空</button>
