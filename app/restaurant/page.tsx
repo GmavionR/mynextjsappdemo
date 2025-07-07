@@ -1,8 +1,12 @@
 
+'use client';
 import { ChevronLeft, Search, Star, MessageCircle, MoreHorizontal, Plus, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
 
 const RestaurantPage = () => {
+  const [activeTab, setActiveTab] = useState('点菜');
+
   return (
     // Add a container to center content and set a max-width for larger screens
     <div className="max-w-7xl mx-auto">
@@ -12,10 +16,13 @@ const RestaurantPage = () => {
           <RestaurantInfoCard />
         </div>
         <div className="bg-white sticky top-0 z-10 shadow-sm">
-          <Tabs />
+          <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
         <div className="p-4">
-          <Menu />
+          {activeTab === '点菜' && <Menu />}
+          {activeTab === '超优惠' && <div className="text-center p-8">超优惠 Content</div>}
+          {activeTab === '评价' && <div className="text-center p-8">评价 Content</div>}
+          {activeTab === '商家' && <div className="text-center p-8">商家 Content</div>}
         </div>
         {/* The footer is fixed, so it's outside the main centered container */}
         <CartFooter />
@@ -34,16 +41,9 @@ const BannerAndHeader = () => (
             // Make banner height responsive
             className="w-full h-48 md:h-64 object-cover" 
         />
-        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
-            <button className="text-white bg-black/30 rounded-full p-1">
-                <ChevronLeft />
-            </button>
+        <div className="absolute top-0 left-0 right-0 p-4 flex justify-end items-center bg-gradient-to-b from-black/50 to-transparent">
             <div className="flex items-center space-x-2 md:space-x-3">
                 <button className="text-white bg-black/30 rounded-full p-1"><Search size={20} /></button>
-                <button className="text-white bg-black/30 rounded-full p-1"><Star size={20} /></button>
-                <button className="text-white bg-black/30 rounded-full p-1"><MessageCircle size={20} /></button>
-                {/* Hide text on very small screens for the "拼单" button */}
-                <button className="bg-white/90 text-black px-3 py-1 rounded-full text-sm font-semibold hidden sm:block">拼单</button>
                 <button className="text-white bg-black/30 rounded-full p-1"><MoreHorizontal size={20} /></button>
             </div>
         </div>
@@ -84,74 +84,99 @@ const RestaurantInfoCard = () => (
     </div>
 );
 
-const Tabs = () => (
-    <div className="flex justify-around border-b items-end h-16">
-        <div className="text-center h-full flex flex-col justify-between items-center py-2">
-            <span className="font-bold text-yellow-500 text-lg leading-none">点菜</span>
-            <div className="w-6 h-1 bg-yellow-500 rounded-full"></div>
-        </div>
-        <div className="text-center h-full flex flex-col justify-center items-center py-2">
-            <span className="text-gray-500 text-lg leading-none">超优惠</span>
-        </div>
-        <div className="text-center h-full flex flex-col justify-center items-center py-2">
-            <span className="text-gray-500 text-lg leading-none">评价</span>
-            <span className="text-gray-500 text-xs leading-none">697</span>
-        </div>
-        <div className="text-center h-full flex flex-col justify-center items-center py-2">
-            <span className="text-gray-500 text-lg leading-none">商家</span>
-        </div>
-    </div>
-);
+const Tabs = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) => {
+    const tabs = ['点菜', '超优惠', '评价', '商家'];
+    const tabCounts: { [key: string]: string } = { '评价': '697' };
 
-const Menu = () => (
-  // On mobile: stack vertically (flex-col). On medium screens and up: side-by-side (md:flex-row)
-  <div className="flex flex-col md:flex-row">
-    {/* On mobile: full-width, scrolls horizontally. On medium screens and up: 1/4 width, stacks vertically */}
-    <div className="w-full md:w-1/4 bg-gray-100 md:space-y-1 p-2 rounded-lg">
-      <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0 pb-2 md:pb-0">
-        <div className="p-2 bg-white rounded-lg text-center flex-shrink-0">
-            <span className="font-bold text-yellow-500 leading-tight">春日暖心❤️限量特</span>
+    return (
+        <div className="flex justify-around border-b items-center h-16">
+            {tabs.map(tab => (
+                <div key={tab} className="relative text-center py-2 cursor-pointer" onClick={() => setActiveTab(tab)}>
+                    <span className={`font-bold text-lg ${activeTab === tab ? 'text-yellow-500' : 'text-gray-500'}`}>{tab}</span>
+                    {tabCounts[tab] && <span className={`block text-xs -mt-1 ${activeTab === tab ? 'text-yellow-500' : 'text-gray-500'}`}>{tabCounts[tab]}</span>}
+                    {activeTab === tab && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-yellow-500 rounded-full"></div>}
+                </div>
+            ))}
         </div>
-        <div className="p-2 text-center flex-shrink-0"><span className="text-gray-600 leading-tight">臻选超值随心配</span></div>
-        <div className="p-2 text-center flex-shrink-0"><span className="text-gray-600 leading-tight">皮薄馅大🐷鲜肉...</span></div>
-        <div className="p-2 text-center flex-shrink-0"><span className="text-gray-600 leading-tight">春日新品</span></div>
-        <div className="p-2 text-center flex-shrink-0"><span className="text-gray-600 leading-tight">素食主义🎄韭菜...</span></div>
-        <button className="w-auto md:w-full mt-0 md:mt-4 bg-yellow-300 text-gray-800 py-2 px-4 md:px-0 rounded-full font-bold text-sm flex-shrink-0">精选套餐</button>
-      </div>
-    </div>
-    {/* On mobile: full-width with top margin. On medium screens and up: 3/4 width with left margin */}
-    <div className="w-full md:w-3/4 bg-white p-4 mt-4 md:mt-0 md:ml-2 rounded-lg">
-      <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-              <span className="font-bold text-gray-800">猜你喜欢</span>
-          </div>
-          <span className="text-gray-400 text-sm hidden sm:block">温馨提示：请适量点餐</span>
-      </div>
-      <MenuItem 
-        image="/dumpling1.png"
-        name="韭菜鸡蛋水饺(整份 24 只)"
-        tags={["月售100+", "店内复购第3名 >", "5人觉得味道赞"]}
-        price={29.88}
-        originalPrice={48.88}
-        discount="6.11折"
-        promoPrice={15.38}
-        isSignature={true}
-      />
-      <div className="mt-6">
-          <h3 className="text-lg font-bold">春日暖心❤️限量特</h3>
-          <MenuItem 
-            image="/dumpling2.png"
-            name="❤️❤️暖心全家福水饺 25只+康师傅冰红茶"
-            tags={["月售400+", "门店销量第1名 >", "店内复购第1名 >"]}
-            price={29.88}
-            originalPrice={58.88}
-            discount="5.07折"
-            isSelectable={true}
-          />
-      </div>
-    </div>
-  </div>
-);
+    );
+};
+
+const Menu = () => {
+    const [selectedCategory, setSelectedCategory] = useState('春日暖心❤️限量特');
+    const categories = ['春日暖心❤️限量特', '臻选超值随心配', '皮薄馅大🐷鲜肉...', '春日新品', '素食主义🎄韭菜...'];
+
+    const randomDishes = Array.from({ length: 5 }, (_, i) => ({
+        name: `随机菜品 ${i + 1}`,
+        tags: [`月售${Math.floor(Math.random() * 500)}+`, `好评率${Math.floor(Math.random() * 20) + 80}%`],
+        price: (Math.random() * 30 + 10).toFixed(2),
+        originalPrice: (Math.random() * 20 + 40).toFixed(2),
+        discount: `${(Math.random() * 5 + 3).toFixed(1)}折`,
+        image: `https://picsum.photos/seed/${i}/200/300`,
+    }));
+
+    return (
+        <div className="flex flex-col md:flex-row">
+            <div className="w-full md:w-1/4 bg-gray-100 md:space-y-1 p-2 rounded-lg">
+                <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0 pb-2 md:pb-0">
+                    {categories.map(category => (
+                        <button
+                            key={category}
+                            onClick={() => setSelectedCategory(category)}
+                            className={`p-2 rounded-lg text-center flex-shrink-0 ${selectedCategory === category ? 'bg-white font-bold text-yellow-500' : 'bg-transparent text-gray-600'}`}
+                        >
+                            <span className="leading-tight">{category}</span>
+                        </button>
+                    ))}
+                    <button className="w-auto md:w-full mt-0 md:mt-4 bg-yellow-300 text-gray-800 py-2 px-4 md:px-0 rounded-full font-bold text-sm flex-shrink-0">精选套餐</button>
+                </div>
+            </div>
+            <div className="w-full md:w-3/4 bg-white p-4 mt-4 md:mt-0 md:ml-2 rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center space-x-2">
+                        <span className="font-bold text-gray-800">猜你喜欢</span>
+                    </div>
+                    <Image src="/PixPin_2025-07-07_18-56-35.png" alt="avatar" width={24} height={24} className="rounded-full" />
+                </div>
+                <MenuItem
+                    image="/shuijiao_1.jpg"
+                    name="韭菜鸡蛋水饺(整份 24 只)"
+                    tags={["月售100+", "店内复购第3名 >", "5人觉得味道赞"]}
+                    price={29.88}
+                    originalPrice={48.88}
+                    discount="6.11折"
+                    promoPrice={15.38}
+                    isSignature={true}
+                />
+                <div className="mt-6">
+                    <h3 className="text-lg font-bold">春日暖心❤️限量特</h3>
+                    <MenuItem
+                        image="/shuijiao_2.jpg"
+                        name="❤️❤️暖心全家福水饺 25只+康师傅冰红茶"
+                        tags={["月售400+", "门店销量第1名 >", "店内复购第1名 >"]}
+                        price={29.88}
+                        originalPrice={58.88}
+                        discount="5.07折"
+                        isSelectable={true}
+                    />
+                </div>
+                <div className="mt-6">
+                    <h3 className="text-lg font-bold">随机推荐</h3>
+                    {randomDishes.map((dish, index) => (
+                        <MenuItem
+                            key={index}
+                            image={dish.image}
+                            name={dish.name}
+                            tags={dish.tags}
+                            price={parseFloat(dish.price)}
+                            originalPrice={parseFloat(dish.originalPrice)}
+                            discount={dish.discount}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 type MenuItemProps = {
   image: string;
@@ -177,7 +202,7 @@ const MenuItem = ({
   isSignature = false 
 }: MenuItemProps) => (
   // On mobile: stack vertically. On small screens and up: side-by-side
-  <div className="flex flex-col sm:flex-row items-start mt-4">
+  <div className="flex flex-col sm:flex-row items-start mt-8">
     {/* On mobile: full-width image. On small screens and up: fixed width */}
     <div className="relative w-full sm:w-28 h-48 sm:h-28 rounded-lg flex-shrink-0 bg-gray-200">
       <Image src={image} alt={name} layout="fill" objectFit="cover" className="rounded-lg" />
