@@ -1,3 +1,6 @@
+// 导入其他文件中定义的类型
+import { Dish, Tag } from '../stores/dishes';
+
 // 购物车项目类型
 export interface CartItem {
   name: string;
@@ -114,4 +117,4 @@ export interface Coupon {
 
 export interface CouponListProps {
   coupons: Coupon[];
-} 
+}
