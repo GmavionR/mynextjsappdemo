@@ -1,0 +1,908 @@
+// 20250708215510
+// http://localhost:3000/api/coupon
+
+{
+  "coupons": [
+    {
+      "id": "1",
+      "user_id": "101",
+      "template_id": "1",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-05T19:58:32.000Z",
+      "expires_at": "2025-08-04T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "1",
+        "name": "全场满99元减10元",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 99
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "常规促活券，覆盖大部分用户",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "2",
+      "user_id": "101",
+      "template_id": "3",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-07T19:58:32.000Z",
+      "expires_at": "2025-07-21T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "3",
+        "name": "全场8.5折(最高优惠20元)",
+        "type": "PERCENTAGE_DISCOUNT",
+        "value": {
+          "max_off": 20,
+          "percentage": 15
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 80
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": 5000,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-07-03T19:56:02.000Z",
+        "issue_end_time": "2025-07-23T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 14,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "用于提升高客单价订单",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "3",
+      "user_id": "101",
+      "template_id": "5",
+      "status": "USED",
+      "acquired_at": "2025-06-30T19:58:32.000Z",
+      "expires_at": "2025-07-30T19:58:32.000Z",
+      "used_at": "2025-07-06T19:58:32.000Z",
+      "used_order_id": "20231113001",
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "5",
+        "name": "【酒水专享】满50减8",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 8
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 50
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "category_ids": ["cat-drinks"]
+            },
+            "rule_type": "ITEM_DISCOUNT_SCOPE"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 3,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "提高酒水饮料的销售额",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "4",
+      "user_id": "101",
+      "template_id": "7",
+      "status": "USED",
+      "acquired_at": "2025-06-28T19:58:32.000Z",
+      "expires_at": "2025-07-13T19:58:32.000Z",
+      "used_at": "2025-07-03T19:58:32.000Z",
+      "used_order_id": "20231110005",
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "7",
+        "name": "【不可叠加】满200减30",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 30
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 200
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "allow_stacking": false
+            },
+            "rule_type": "STACKABILITY"
+          }
+        ],
+        "total_quantity": 1000,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 15,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "大额优惠，防止活动亏损",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "5",
+      "user_id": "101",
+      "template_id": "8",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-06T19:58:32.000Z",
+      "expires_at": "2025-08-05T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "8",
+        "name": "VIP会员每月特权9折券",
+        "type": "PERCENTAGE_DISCOUNT",
+        "value": {
+          "percentage": 10
+        },
+        "usage_rules": [],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": {
+          "tags": ["VIP"],
+          "type": "USER_TAGS"
+        },
+        "remarks": "会员关怀，每月可领",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "6",
+      "user_id": "101",
+      "template_id": "1",
+      "status": "EXPIRED",
+      "acquired_at": "2025-05-29T19:58:32.000Z",
+      "expires_at": "2025-06-28T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "1",
+        "name": "全场满99元减10元",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 99
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "常规促活券，覆盖大部分用户",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "7",
+      "user_id": "102",
+      "template_id": "1",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-03T19:58:32.000Z",
+      "expires_at": "2025-08-02T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "1",
+        "name": "全场满99元减10元",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 99
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "常规促活券，覆盖大部分用户",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "8",
+      "user_id": "102",
+      "template_id": "4",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-08T17:58:32.000Z",
+      "expires_at": "2025-08-07T17:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "4",
+        "name": "购买[招牌烤鸭]赠饮品一份",
+        "type": "FREE_ITEM",
+        "value": {
+          "item_id": "d-901",
+          "item_name": "酸梅汤"
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "required_item_ids": ["d-101"]
+            },
+            "rule_type": "CONDITIONAL_GIFT_ITEM"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-08-27T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "捆绑销售，主推招牌菜",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "9",
+      "user_id": "102",
+      "template_id": "6",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-07T19:58:32.000Z",
+      "expires_at": "2025-08-06T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "6",
+        "name": "工作日午市专享-满60减10",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 60
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "days": [1, 2, 3, 4, 5]
+            },
+            "rule_type": "VALID_DAYS_OF_WEEK"
+          },
+          {
+            "params": {
+              "slots": [
+                {
+                  "end": "14:00",
+                  "start": "11:00"
+                }
+              ]
+            },
+            "rule_type": "VALID_TIME_SLOTS"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 5,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "提升工作日午间客流",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "10",
+      "user_id": "102",
+      "template_id": "3",
+      "status": "USED",
+      "acquired_at": "2025-06-28T19:58:32.000Z",
+      "expires_at": "2025-07-12T19:58:32.000Z",
+      "used_at": "2025-07-07T19:58:32.000Z",
+      "used_order_id": "20231114002",
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "3",
+        "name": "全场8.5折(最高优惠20元)",
+        "type": "PERCENTAGE_DISCOUNT",
+        "value": {
+          "max_off": 20,
+          "percentage": 15
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 80
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": 5000,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-07-03T19:56:02.000Z",
+        "issue_end_time": "2025-07-23T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 14,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "用于提升高客单价订单",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "11",
+      "user_id": "102",
+      "template_id": "5",
+      "status": "EXPIRED",
+      "acquired_at": "2025-06-03T19:58:32.000Z",
+      "expires_at": "2025-07-03T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "5",
+        "name": "【酒水专享】满50减8",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 8
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 50
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "category_ids": ["cat-drinks"]
+            },
+            "rule_type": "ITEM_DISCOUNT_SCOPE"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 3,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "提高酒水饮料的销售额",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "12",
+      "user_id": "103",
+      "template_id": "2",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-08T19:53:32.000Z",
+      "expires_at": "2025-07-15T19:53:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "2",
+        "name": "新人5元无门槛红包",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 5
+        },
+        "usage_rules": [],
+        "total_quantity": 10000,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-08T19:56:02.000Z",
+        "issue_end_time": "2026-07-08T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 7,
+        "status": "ACTIVE",
+        "target_user_group": {
+          "type": "NEW_USER"
+        },
+        "remarks": "新用户注册自动发放",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "13",
+      "user_id": "103",
+      "template_id": "1",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-08T19:54:32.000Z",
+      "expires_at": "2025-08-07T19:54:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "1",
+        "name": "全场满99元减10元",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 99
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "常规促活券，覆盖大部分用户",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "14",
+      "user_id": "103",
+      "template_id": "3",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-08T19:55:32.000Z",
+      "expires_at": "2025-07-22T19:55:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "3",
+        "name": "全场8.5折(最高优惠20元)",
+        "type": "PERCENTAGE_DISCOUNT",
+        "value": {
+          "max_off": 20,
+          "percentage": 15
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 80
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": 5000,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-07-03T19:56:02.000Z",
+        "issue_end_time": "2025-07-23T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 14,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "用于提升高客单价订单",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "15",
+      "user_id": "103",
+      "template_id": "5",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-08T19:56:32.000Z",
+      "expires_at": "2025-08-07T19:56:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "5",
+        "name": "【酒水专享】满50减8",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 8
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 50
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "category_ids": ["cat-drinks"]
+            },
+            "rule_type": "ITEM_DISCOUNT_SCOPE"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 3,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "提高酒水饮料的销售额",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "16",
+      "user_id": "101",
+      "template_id": "4",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-02T19:58:32.000Z",
+      "expires_at": "2025-08-01T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "4",
+        "name": "购买[招牌烤鸭]赠饮品一份",
+        "type": "FREE_ITEM",
+        "value": {
+          "item_id": "d-901",
+          "item_name": "酸梅汤"
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "required_item_ids": ["d-101"]
+            },
+            "rule_type": "CONDITIONAL_GIFT_ITEM"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-08-27T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "捆绑销售，主推招牌菜",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "17",
+      "user_id": "102",
+      "template_id": "7",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-04T19:58:32.000Z",
+      "expires_at": "2025-07-19T19:58:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "7",
+        "name": "【不可叠加】满200减30",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 30
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 200
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "allow_stacking": false
+            },
+            "rule_type": "STACKABILITY"
+          }
+        ],
+        "total_quantity": 1000,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 15,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "大额优惠，防止活动亏损",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "18",
+      "user_id": "101",
+      "template_id": "6",
+      "status": "USED",
+      "acquired_at": "2025-06-29T19:58:32.000Z",
+      "expires_at": "2025-07-29T19:58:32.000Z",
+      "used_at": "2025-07-05T19:58:32.000Z",
+      "used_order_id": "20231112003",
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "6",
+        "name": "工作日午市专享-满60减10",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 60
+            },
+            "rule_type": "MINIMUM_SPEND"
+          },
+          {
+            "params": {
+              "days": [1, 2, 3, 4, 5]
+            },
+            "rule_type": "VALID_DAYS_OF_WEEK"
+          },
+          {
+            "params": {
+              "slots": [
+                {
+                  "end": "14:00",
+                  "start": "11:00"
+                }
+              ]
+            },
+            "rule_type": "VALID_TIME_SLOTS"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 5,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "提升工作日午间客流",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "19",
+      "user_id": "102",
+      "template_id": "1",
+      "status": "USED",
+      "acquired_at": "2025-06-23T19:58:32.000Z",
+      "expires_at": "2025-07-23T19:58:32.000Z",
+      "used_at": "2025-06-28T19:58:32.000Z",
+      "used_order_id": "20231105008",
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "1",
+        "name": "全场满99元减10元",
+        "type": "CASH_VOUCHER",
+        "value": {
+          "amount": 10
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "amount": 99
+            },
+            "rule_type": "MINIMUM_SPEND"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-07-28T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "常规促活券，覆盖大部分用户",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    },
+    {
+      "id": "20",
+      "user_id": "103",
+      "template_id": "4",
+      "status": "UNUSED",
+      "acquired_at": "2025-07-08T19:57:32.000Z",
+      "expires_at": "2025-08-07T19:57:32.000Z",
+      "used_at": null,
+      "used_order_id": null,
+      "created_at": "2025-07-08T19:58:32.000Z",
+      "updated_at": "2025-07-08T19:58:32.000Z",
+      "coupon_templates": {
+        "id": "4",
+        "name": "购买[招牌烤鸭]赠饮品一份",
+        "type": "FREE_ITEM",
+        "value": {
+          "item_id": "d-901",
+          "item_name": "酸梅汤"
+        },
+        "usage_rules": [
+          {
+            "params": {
+              "required_item_ids": ["d-101"]
+            },
+            "rule_type": "CONDITIONAL_GIFT_ITEM"
+          }
+        ],
+        "total_quantity": -1,
+        "issued_quantity": 0,
+        "per_user_limit": 1,
+        "issue_start_time": "2025-06-28T19:56:02.000Z",
+        "issue_end_time": "2025-08-27T19:56:02.000Z",
+        "validity_type": "RELATIVE_DAYS",
+        "valid_from": null,
+        "valid_until": null,
+        "valid_days_after_issue": 30,
+        "status": "ACTIVE",
+        "target_user_group": null,
+        "remarks": "捆绑销售，主推招牌菜",
+        "created_at": "2025-07-08T19:56:02.000Z",
+        "updated_at": "2025-07-08T19:56:02.000Z"
+      }
+    }
+  ]
+}

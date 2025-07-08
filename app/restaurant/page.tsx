@@ -1,19 +1,34 @@
 'use client';
-import { ChevronLeft, Search, Star, MessageCircle, MoreHorizontal, Plus, ShoppingCart, X, Trash2 } from 'lucide-react';
+import { ChevronLeft, Search, Star, MessageCircle, MoreHorizontal, Plus, ShoppingCart, X, Trash2, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useMemo, useEffect } from 'react';
 import { dishesData, type Dish, type Specifications, type SpecificationOption, type Tag } from '../stores/dishes';
+import { CartItem, Coupon } from '../types';
+import { useSearch } from '../hooks/useSearch';
+import SearchModal from '../components/SearchModal';
+import Toast from '../components/Toast';
+import DishItem from '../components/DishItem';
+import CouponList from '../components/CouponList';
 
 const menuData = dishesData;
 
 const RestaurantPage = () => {
   const [activeTab, setActiveTab] = useState('点菜');
-  const [cart, setCart] = useState<any[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Dish[]>([]);
-  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+
+  const {
+    searchQuery,
+    searchResults,
+    searchHistory,
+    handleSearch,
+    handleSearchSubmit,
+    clearHistory,
+  } = useSearch(menuData);
 
   useEffect(() => {
     if (isCartOpen || isSearchOpen) {
@@ -26,60 +41,24 @@ const RestaurantPage = () => {
     };
   }, [isCartOpen, isSearchOpen]);
 
-  // 加载搜索历史
   useEffect(() => {
-    const history = localStorage.getItem('searchHistory');
-    if (history) {
-      setSearchHistory(JSON.parse(history));
+    if (activeTab === '超优惠') {
+      fetchCoupons();
     }
-  }, []);
+  }, [activeTab]);
 
-  // 保存搜索历史
-  const saveToHistory = (query: string) => {
-    if (!query.trim()) return;
-    
-    const newHistory = [
-      query,
-      ...searchHistory.filter(item => item !== query)
-    ].slice(0, 10); // 只保留最近10条记录
-    
-    setSearchHistory(newHistory);
-    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  const showSuccessToast = (dishName: string) => {
+    setToastMessage(`已添加 ${dishName}`);
+    setShowToast(true);
   };
 
-  // 清空搜索历史
-  const clearHistory = () => {
-    setSearchHistory([]);
-    localStorage.removeItem('searchHistory');
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    
-    // 搜索所有分类中的菜品
-    const results: Dish[] = [];
-    Object.values(menuData).forEach(dishes => {
-      dishes.forEach(dish => {
-        if (dish.name.toLowerCase().includes(query.toLowerCase())) {
-          results.push(dish);
-        }
-      });
-    });
-    setSearchResults(results);
-  };
-
-  const handleSearchSubmit = (query: string) => {
-    handleSearch(query);
-    saveToHistory(query);
-  };
-
-  const addToCart = (item: any) => {
+  const addToCart = (item: CartItem) => {
     setCart(prevCart => {
-      const existingItemIndex = prevCart.findIndex(cartItem => cartItem.name === item.name && JSON.stringify(cartItem.options) === JSON.stringify(item.options));
+      const existingItemIndex = prevCart.findIndex(cartItem => 
+        cartItem.name === item.name && 
+        JSON.stringify(cartItem.options) === JSON.stringify(item.options)
+      );
+      
       if (existingItemIndex > -1) {
         const newCart = [...prevCart];
         newCart[existingItemIndex].quantity++;
@@ -88,22 +67,36 @@ const RestaurantPage = () => {
         return [...prevCart, { ...item, quantity: 1 }];
       }
     });
+    showSuccessToast(item.name);
   };
 
-  const updateQuantity = (name: string, options: any, delta: number) => {
+  const updateQuantity = (name: string, options: Record<string, string>, delta: number) => {
     setCart(prevCart => {
-        return prevCart.map(item => {
-            if (item.name === name && JSON.stringify(item.options) === JSON.stringify(options)) {
-                const newQuantity = item.quantity + delta;
-                return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
-            }
-            return item;
-        }).filter(item => item !== null) as any[];
+      return prevCart.map(item => {
+        if (item.name === name && JSON.stringify(item.options) === JSON.stringify(options)) {
+          const newQuantity = item.quantity + delta;
+          return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+        }
+        return item;
+      }).filter((item): item is CartItem => item !== null);
     });
   };
 
   const clearCart = () => {
     setCart([]);
+  };
+
+  const fetchCoupons = async () => {
+    try {
+      const response = await fetch('/api/coupon');
+      const data = await response.json();
+      if (data.coupons) {
+        console.log('Fetched coupons:', data.coupons);
+        setCoupons(data.coupons);
+      }
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+    }
   };
 
   return (
@@ -118,12 +111,19 @@ const RestaurantPage = () => {
         </div>
         <div className="p-4">
           {activeTab === '点菜' && <Menu addToCart={addToCart} />}
-          {activeTab === '超优惠' && <div className="text-center p-8">超优惠 Content</div>}
+          {activeTab === '超优惠' && <CouponList coupons={coupons} />}
           {activeTab === '评价' && <div className="text-center p-8">评价 Content</div>}
           {activeTab === '商家' && <div className="text-center p-8">商家 Content</div>}
         </div>
         <CartFooter cart={cart} toggleCart={() => setIsCartOpen(!isCartOpen)} />
-        {isCartOpen && <CartPopup cart={cart} onClose={() => setIsCartOpen(false)} updateQuantity={updateQuantity} clearCart={clearCart} />}
+        {isCartOpen && (
+          <CartPopup 
+            cart={cart} 
+            onClose={() => setIsCartOpen(false)} 
+            updateQuantity={updateQuantity} 
+            clearCart={clearCart} 
+          />
+        )}
         {isSearchOpen && (
           <SearchModal 
             onClose={() => setIsSearchOpen(false)} 
@@ -134,6 +134,12 @@ const RestaurantPage = () => {
             searchHistory={searchHistory}
             clearHistory={clearHistory}
             addToCart={addToCart}
+          />
+        )}
+        {showToast && (
+          <Toast 
+            message={toastMessage} 
+            onClose={() => setShowToast(false)} 
           />
         )}
       </div>
@@ -195,26 +201,45 @@ const Tabs = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (t
     const tabCounts: { [key: string]: string } = { '评价': '697' };
 
     return (
-        <div className="flex justify-around border-b items-center h-16">
+        <div className="flex border-b">
             {tabs.map(tab => (
-                <div key={tab} className="relative text-center py-2 cursor-pointer" onClick={() => setActiveTab(tab)}>
-                    <span className={`font-bold text-lg ${activeTab === tab ? 'text-yellow-500' : 'text-gray-500'}`}>{tab}</span>
-                    {tabCounts[tab] && <span className={`block text-xs -mt-1 ${activeTab === tab ? 'text-yellow-500' : 'text-gray-500'}`}>{tabCounts[tab]}</span>}
-                    {activeTab === tab && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-yellow-500 rounded-full"></div>}
-                </div>
+                <button
+                    key={tab}
+                    className={`flex-1 py-3 text-center relative ${activeTab === tab ? 'text-black font-bold' : 'text-gray-500'}`}
+                    onClick={() => setActiveTab(tab)}
+                >
+                    <span>{tab}</span>
+                    {tabCounts[tab] && (
+                        <span className="ml-1 text-xs text-gray-400">
+                            {tabCounts[tab]}
+                        </span>
+                    )}
+                    {activeTab === tab && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400"></div>
+                    )}
+                </button>
             ))}
         </div>
     );
 };
 
-const Menu = ({ addToCart }: { addToCart: (item: any) => void }) => {
+const Menu = ({ addToCart }: { addToCart: (item: CartItem) => void }) => {
     const [selectedCategory, setSelectedCategory] = useState(Object.keys(menuData)[0]);
     const categories = Object.keys(menuData);
     const dishes = menuData[selectedCategory as keyof typeof menuData];
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedDish, setSelectedDish] = useState<any>(null);
+    const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
-    const openModal = (dish:any) => {
+    const handleAddToCart = (dish: Dish) => {
+      addToCart({ 
+        name: dish.name, 
+        price: dish.price,
+        quantity: 1,
+        options: {}
+      });
+    };
+
+    const openModal = (dish: Dish) => {
         setSelectedDish(dish);
         setIsModalOpen(true);
     };
@@ -226,23 +251,33 @@ const Menu = ({ addToCart }: { addToCart: (item: any) => void }) => {
 
     return (
         <div className="flex flex-col md:flex-row">
-            <div className="w-full md:w-1/4 p-2">
-                <div className="flex flex-row flex-wrap md:flex-col md:overflow-visible space-x-2 md:space-x-0 pb-2 md:pb-0">
+            <div className="w-full md:w-1/4">
+                <div className="flex flex-row flex-wrap md:flex-col md:overflow-visible space-x-2 md:space-x-0">
                     {categories.map(category => (
                         <button
                             key={category}
                             onClick={() => setSelectedCategory(category)}
-                            className={`p-3 rounded-lg text-left w-auto md:w-full mb-2 ${selectedCategory === category ? 'bg-gray-100 font-bold text-gray-900' : 'bg-transparent text-gray-600'}`}
+                            className={`py-2 px-3 rounded-lg text-left w-auto md:w-full ${selectedCategory === category ? 'bg-gray-100 font-bold text-gray-900' : 'bg-transparent text-gray-600'}`}
                         >
                             <span className="leading-tight">{category}</span>
                         </button>
                     ))}
                 </div>
+                <div className="bg-yellow-50 mt-2 overflow-hidden">
+                    <div className="flex items-center justify-center py-1.5 px-2 relative w-full">
+                        <div className="flex items-center gap-1 animate-scroll-x w-full justify-center">
+                            <AlertCircle size={14} className="text-yellow-600 flex-shrink-0" />
+                            <span className="text-yellow-700 text-xs whitespace-nowrap">
+                                如需其他菜品可告知老板,支持带菜加工.
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div className="w-full md:w-3/4 bg-white p-4 md:ml-2 rounded-lg">
                 <h3 className="text-lg font-bold mb-4">{selectedCategory}</h3>
-                {dishes.map((dish: any, index) => (
-                    <MenuItem
+                {dishes.map((dish: Dish, index) => (
+                    <DishItem
                         key={index}
                         image={`https://picsum.photos/seed/${dish.name}/200/300`}
                         name={dish.name}
@@ -252,83 +287,19 @@ const Menu = ({ addToCart }: { addToCart: (item: any) => void }) => {
                         discount={dish.discount}
                         isSelectable={dish.isSelectable}
                         onSelect={() => openModal(dish)}
-                        addToCart={addToCart}
+                        addToCart={() => handleAddToCart(dish)}
                     />
                 ))}
             </div>
-            {isModalOpen && selectedDish && <SpecificationModal dish={selectedDish} onClose={closeModal} addToCart={addToCart} />}
+            {isModalOpen && selectedDish && (
+                <SpecificationModal 
+                    dish={selectedDish} 
+                    onClose={closeModal} 
+                    addToCart={addToCart} 
+                />
+            )}
         </div>
     );
-};
-
-type MenuItemProps = {
-  image: string;
-  name: string;
-  tags?: Tag[];
-  price: number;
-  originalPrice: number;
-  discount: string;
-  promoPrice?: number | null;
-  isSelectable?: boolean;
-  isSignature?: boolean;
-  onSelect?: () => void;
-  addToCart: (item: any) => void;
-};
-
-const MenuItem = ({ 
-  image, 
-  name, 
-  tags = [], 
-  price, 
-  originalPrice, 
-  discount, 
-  promoPrice = null, 
-  isSelectable = false, 
-  isSignature = false,
-  onSelect,
-  addToCart
-}: MenuItemProps) => (
-  <div className="flex flex-col sm:flex-row items-start mt-8">
-    <div className="relative w-full sm:w-28 h-48 sm:h-28 rounded-lg flex-shrink-0 bg-gray-200">
-      <Image src={image} alt={name} layout="fill" objectFit="cover" className="rounded-lg" />
-      {isSignature && <span className="absolute top-0 left-0 bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-lg">招牌</span>}
-    </div>
-    <div className="ml-0 sm:ml-4 mt-2 sm:mt-0 flex-grow w-full">
-      <h4 className="text-lg font-bold">{name}</h4>
-      <div className="flex flex-wrap items-center text-xs text-orange-500 mt-1">
-          {tags.map((tag, index) => (
-            <span key={index} className={`mr-2 mb-1 px-2 py-1 rounded ${
-              tag.category === 'REPEAT_CUSTOMER' || tag.category === 'SALES_RANK' 
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-orange-100'
-            }`}>
-              {tag.text}
-            </span>
-          ))}
-      </div>
-      <span className="border border-red-500 text-red-500 text-xs px-2 py-0.5 rounded mt-1 inline-block">{discount}</span>
-      <div className="flex justify-between items-end mt-2">
-        <div>
-            <div className="flex items-baseline">
-                <span className="text-red-500 text-xl font-bold">¥{price.toFixed(2)}</span>
-                <span className="text-gray-400 line-through ml-2">¥{originalPrice.toFixed(2)}</span>
-            </div>
-            {promoPrice && <span className="text-red-500 text-sm">¥{promoPrice.toFixed(2)} 神券价</span>}
-        </div>
-        <div className="self-end">
-            {isSelectable ? <button onClick={onSelect} className="bg-yellow-400 text-gray-800 px-4 py-1 rounded-full font-bold">选规格</button> : <PlusCircle onClick={() => addToCart({ name, price })} />}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const PlusCircle = ({ onClick }: { onClick: () => void }) => {
-    return (
-        <button onClick={onClick} className="bg-yellow-400 text-white rounded-full w-6 h-6 flex items-center justify-center">
-            <Plus size={20} />
-        </button>
-    )
 };
 
 const SpecificationModal = ({ dish, onClose, addToCart }: { dish: any, onClose: () => void, addToCart: (item: any) => void }) => {
@@ -408,7 +379,7 @@ const SpecificationModal = ({ dish, onClose, addToCart }: { dish: any, onClose: 
     );
 };
 
-const CartFooter = ({ cart, toggleCart }: { cart: any[], toggleCart: () => void }) => {
+const CartFooter = ({ cart, toggleCart }: { cart: CartItem[], toggleCart: () => void }) => {
     const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
     const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
@@ -445,7 +416,17 @@ const CartFooter = ({ cart, toggleCart }: { cart: any[], toggleCart: () => void 
     );
 };
 
-const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], onClose: () => void, updateQuantity: (name: string, options: any, delta: number) => void, clearCart: () => void }) => {
+const CartPopup = ({ 
+  cart, 
+  onClose, 
+  updateQuantity, 
+  clearCart 
+}: { 
+  cart: CartItem[];
+  onClose: () => void;
+  updateQuantity: (name: string, options: Record<string, string>, delta: number) => void;
+  clearCart: () => void;
+}) => {
     const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
     const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
     const isEmpty = totalItems === 0;
@@ -470,15 +451,17 @@ const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], 
                                 />
                                 <div>
                                     <p className="font-semibold">{item.name}</p>
-                                    {item.options && <p className="text-xs text-gray-500">{Object.values(item.options).join(', ')}</p>}
+                                    {item.options && Object.keys(item.options).length > 0 && (
+                                      <p className="text-xs text-gray-500">{Object.values(item.options).join(', ')}</p>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center">
                                 <span className="font-semibold mr-4">¥{(item.price * item.quantity).toFixed(2)}</span>
                                 <div className="flex items-center">
-                                    <button onClick={() => updateQuantity(item.name, item.options, -1)} className="bg-gray-200 rounded-full w-6 h-6 flex items-center justify-center">-</button>
+                                    <button onClick={() => updateQuantity(item.name, item.options || {}, -1)} className="bg-gray-200 rounded-full w-6 h-6 flex items-center justify-center">-</button>
                                     <span className="mx-2">{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.name, item.options, 1)} className="bg-yellow-400 text-white rounded-full w-6 h-6 flex items-center justify-center">+</button>
+                                    <button onClick={() => updateQuantity(item.name, item.options || {}, 1)} className="bg-yellow-400 text-white rounded-full w-6 h-6 flex items-center justify-center">+</button>
                                 </div>
                             </div>
                         </div>
@@ -498,138 +481,6 @@ const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], 
             </div>
         </div>
     );
-};
-
-const SearchModal = ({ 
-  onClose, 
-  searchQuery, 
-  onSearch,
-  onSearchSubmit,
-  searchResults,
-  searchHistory,
-  clearHistory,
-  addToCart
-}: { 
-  onClose: () => void;
-  searchQuery: string;
-  onSearch: (query: string) => void;
-  onSearchSubmit: (query: string) => void;
-  searchResults: Dish[];
-  searchHistory: string[];
-  clearHistory: () => void;
-  addToCart: (item: any) => void;
-}) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearchSubmit(searchQuery);
-  };
-
-  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const [isSpecModalOpen, setIsSpecModalOpen] = useState(false);
-
-  const handleDishSelect = (dish: Dish) => {
-    if (dish.isSelectable) {
-      setSelectedDish(dish);
-      setIsSpecModalOpen(true);
-    } else {
-      addToCart({ 
-        name: dish.name, 
-        price: dish.price,
-        options: {}
-      });
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-white z-50">
-      <div className="sticky top-0 bg-white shadow-sm">
-        <div className="flex items-center p-4 gap-3">
-          <button onClick={onClose} className="p-2">
-            <ChevronLeft size={24} />
-          </button>
-          <form onSubmit={handleSubmit} className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearch(e.target.value)}
-                placeholder="搜索菜品"
-                className="w-full py-2 pl-10 pr-4 bg-gray-100 rounded-full outline-none"
-                autoFocus
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <div className="p-4">
-        {searchQuery ? (
-          <>
-            <div className="text-sm text-gray-500 mb-4">
-              {searchResults.length ? `找到 ${searchResults.length} 个相关菜品` : '未找到相关菜品'}
-            </div>
-            <div className="space-y-6">
-              {searchResults.map((dish, index) => (
-                <MenuItem
-                  key={index}
-                  image={`https://picsum.photos/seed/${dish.name}/200/300`}
-                  name={dish.name}
-                  tags={dish.tags}
-                  price={dish.price}
-                  originalPrice={dish.originalPrice}
-                  discount={dish.discount}
-                  isSelectable={dish.isSelectable}
-                  onSelect={() => handleDishSelect(dish)}
-                  addToCart={addToCart}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <div>
-            {searchHistory.length > 0 ? (
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-gray-500 text-sm">搜索历史</h3>
-                  <button 
-                    onClick={clearHistory}
-                    className="text-gray-400 text-sm hover:text-gray-600"
-                  >
-                    清空历史记录
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {searchHistory.map((query, index) => (
-                    <button
-                      key={index}
-                      onClick={() => onSearchSubmit(query)}
-                      className="px-4 py-1.5 bg-gray-100 rounded-full text-sm text-gray-600 hover:bg-gray-200"
-                    >
-                      {query}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 mt-8">
-                <Search size={48} className="mx-auto mb-4 text-gray-300" />
-                <p>搜索你想要的菜品</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {isSpecModalOpen && selectedDish && (
-        <SpecificationModal 
-          dish={selectedDish} 
-          onClose={() => setIsSpecModalOpen(false)} 
-          addToCart={addToCart} 
-        />
-      )}
-    </div>
-  );
 };
 
 export default RestaurantPage;
