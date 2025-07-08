@@ -2,7 +2,7 @@
 'use client';
 import { ChevronLeft, Search, Star, MessageCircle, MoreHorizontal, Plus, ShoppingCart, X, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 const menuData = {
   "折扣超值": [
@@ -85,6 +85,17 @@ const RestaurantPage = () => {
   const [activeTab, setActiveTab] = useState('点菜');
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isCartOpen]);
 
   const addToCart = (item: any) => {
     setCart(prevCart => {
@@ -357,7 +368,7 @@ const SpecificationModal = ({ dish, onClose, addToCart }: { dish: any, onClose: 
     const selectedSpecs = Object.values(selectedOptions).join(', ');
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-sm">
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold">{dish.name}</h3>
@@ -401,26 +412,46 @@ const CartFooter = ({ cart, toggleCart }: { cart: any[], toggleCart: () => void 
     const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
     const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
+    const isEmpty = totalItems === 0;
+
     return (
         <div className="fixed bottom-0 left-0 right-0 bg-white p-2 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] flex justify-between items-center z-20 max-w-7xl mx-auto">
             <div className="flex items-center">
-                <button onClick={toggleCart} className="bg-yellow-400 p-3 rounded-full relative">
-                    {totalItems > 0 && <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">{totalItems}</div>}
-                    <ShoppingCart className="text-black" />
+                <button 
+                    onClick={!isEmpty ? toggleCart : undefined} 
+                    className={`p-3 rounded-full relative ${isEmpty ? 'bg-gray-300' : 'bg-yellow-400'}`}
+                >
+                    {!isEmpty && <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">{totalItems}</div>}
+                    <ShoppingCart className={`${isEmpty ? 'text-gray-500' : 'text-black'}`} />
                 </button>
                 <div className="ml-4">
-                    <p className="text-xl font-bold text-black">¥{totalPrice.toFixed(2)}</p>
-                    <p className="text-xs text-gray-500">另需配送费 ¥3</p>
+                    {isEmpty ? (
+                        <p className="text-gray-500">未选购商品</p>
+                    ) : (
+                        <>
+                            <p className="text-xl font-bold text-black">¥{totalPrice.toFixed(2)}</p>
+                            <p className="text-xs text-gray-500">另需配送费 ¥3</p>
+                        </>
+                    )}
                 </div>
             </div>
-            <button className="bg-yellow-400 text-black px-8 py-3 rounded-full text-base md:text-lg font-bold">去结算</button>
+            <button 
+                disabled={isEmpty}
+                className={`px-8 py-3 rounded-full text-base md:text-lg font-bold ${isEmpty ? 'bg-gray-300 text-gray-500' : 'bg-yellow-400 text-black'}`}
+            >
+                {isEmpty ? '¥20起送' : '去结算'}
+            </button>
         </div>
     );
 };
 
 const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], onClose: () => void, updateQuantity: (name: string, options: any, delta: number) => void, clearCart: () => void }) => {
+    const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+    const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    const isEmpty = totalItems === 0;
+
     return (
-        <div className="fixed inset-0 z-40 flex items-end bg-gray-200 bg-opacity-30" onClick={onClose}>
+        <div className="fixed inset-0 z-40 flex items-end bg-black/50" onClick={onClose}>
             <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[50vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="font-bold text-lg">已选购商品</h3>
@@ -430,7 +461,13 @@ const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], 
                     {cart.map((item, index) => (
                         <div key={index} className="flex justify-between items-center mb-4">
                             <div className='flex items-center'>
-                                <Image src={`https://picsum.photos/seed/${item.name}/200/300`} alt={item.name} width={48} height={48} className="rounded-md mr-4" />
+                                <Image 
+                                    src={`https://picsum.photos/seed/${item.name}/200/300`} 
+                                    alt={item.name} 
+                                    width={48}
+                                    height={48}
+                                    className="rounded-md mr-4 w-12 h-12 object-cover" 
+                                />
                                 <div>
                                     <p className="font-semibold">{item.name}</p>
                                     {item.options && <p className="text-xs text-gray-500">{Object.values(item.options).join(', ')}</p>}
@@ -447,6 +484,17 @@ const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], 
                         </div>
                     ))}
                 </div>
+                {!isEmpty && (
+                    <div className="p-4 border-t flex justify-between items-center">
+                        <div>
+                            <p className="text-xl font-bold text-black">¥{totalPrice.toFixed(2)}</p>
+                            <p className="text-xs text-gray-500">另需配送费 ¥3</p>
+                        </div>
+                        <button className="bg-yellow-400 text-black px-8 py-3 rounded-full text-base md:text-lg font-bold">
+                            去结算
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
