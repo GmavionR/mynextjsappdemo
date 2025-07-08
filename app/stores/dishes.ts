@@ -1,3 +1,5 @@
+import { DISH_CATEGORIES, type DishCategoryId } from '../types/constants';
+
 // 规格选项接口
 interface SpecificationOption {
   name: string;
@@ -14,7 +16,7 @@ interface Specifications {
 interface Dish {
   id: string;
   name: string;
-  category: string;
+  category: DishCategoryId;
   image: string;
   isSignature?: boolean;
   price: number;
@@ -116,12 +118,12 @@ function getRandomTags(): Tag[] {
 }
 
 // 按分类组织的菜品数据
-export const dishesData: { [key: string]: Dish[] } = {
-  折扣超值: [
+export const dishesData: Record<DishCategoryId, Dish[]> = {
+  [DISH_CATEGORIES.DISCOUNT.id]: [
     {
       id: "1",
       name: "炸春卷",
-      category: "折扣超值",
+      category: DISH_CATEGORIES.DISCOUNT.id,
       image: "/dishes/spring-roll.jpg",
       price: 15.0,
       originalPrice: 20.0,
@@ -134,7 +136,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "2",
       name: "盐酥鸡",
-      category: "折扣超值",
+      category: DISH_CATEGORIES.DISCOUNT.id,
       image: "/dishes/fried-chicken.jpg",
       price: 22.0,
       originalPrice: 28.0,
@@ -146,7 +148,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "10",
       name: "麻婆豆腐",
-      category: "折扣超值",
+      category: DISH_CATEGORIES.DISCOUNT.id,
       image: "/dishes/mapo-tofu.jpg",
       price: 18.0,
       originalPrice: 25.0,
@@ -158,7 +160,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "11",
       name: "酸菜鱼",
-      category: "折扣超值",
+      category: DISH_CATEGORIES.DISCOUNT.id,
       image: "/dishes/sour-fish.jpg",
       price: 42.0,
       originalPrice: 58.0,
@@ -169,11 +171,11 @@ export const dishesData: { [key: string]: Dish[] } = {
       tags: getRandomTags()
     }
   ],
-  热菜类: [
+  [DISH_CATEGORIES.HOT_DISHES.id]: [
     {
       id: "3",
       name: "宫保鸡丁",
-      category: "热菜类",
+      category: DISH_CATEGORIES.HOT_DISHES.id,
       image: "/dishes/kungpao-chicken.jpg",
       price: 35.0,
       originalPrice: 45.0,
@@ -186,7 +188,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "12",
       name: "红烧肉",
-      category: "热菜类",
+      category: DISH_CATEGORIES.HOT_DISHES.id,
       image: "/dishes/braised-pork.jpg",
       price: 48.0,
       originalPrice: 58.0,
@@ -199,7 +201,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "13",
       name: "鱼香肉丝",
-      category: "热菜类",
+      category: DISH_CATEGORIES.HOT_DISHES.id,
       image: "/dishes/yuxiang-pork.jpg",
       price: 32.0,
       originalPrice: 38.0,
@@ -211,7 +213,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "14",
       name: "干锅牛肉",
-      category: "热菜类",
+      category: DISH_CATEGORIES.HOT_DISHES.id,
       image: "/dishes/beef-pot.jpg",
       price: 58.0,
       originalPrice: 68.0,
@@ -221,11 +223,11 @@ export const dishesData: { [key: string]: Dish[] } = {
       tags: getRandomTags()
     }
   ],
-  素菜类: [
+  [DISH_CATEGORIES.VEGETABLE_DISHES.id]: [
     {
       id: "5",
       name: "炒时蔬",
-      category: "素菜类",
+      category: DISH_CATEGORIES.VEGETABLE_DISHES.id,
       image: "/dishes/vegetables.jpg",
       price: 18.0,
       originalPrice: 22.0,
@@ -237,7 +239,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "15",
       name: "干煸四季豆",
-      category: "素菜类",
+      category: DISH_CATEGORIES.VEGETABLE_DISHES.id,
       image: "/dishes/fried-beans.jpg",
       price: 22.0,
       originalPrice: 26.0,
@@ -249,7 +251,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "16",
       name: "蒜蓉空心菜",
-      category: "素菜类",
+      category: DISH_CATEGORIES.VEGETABLE_DISHES.id,
       image: "/dishes/water-spinach.jpg",
       price: 20.0,
       originalPrice: 24.0,
@@ -259,11 +261,11 @@ export const dishesData: { [key: string]: Dish[] } = {
       tags: getRandomTags()
     }
   ],
-  汤类: [
+  [DISH_CATEGORIES.SOUPS.id]: [
     {
       id: "7",
       name: "牛肉粉丝汤",
-      category: "汤类",
+      category: DISH_CATEGORIES.SOUPS.id,
       image: "/dishes/beef-noodle-soup.jpg",
       price: 32.0,
       originalPrice: 40.0,
@@ -298,7 +300,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "17",
       name: "酸辣汤",
-      category: "汤类",
+      category: DISH_CATEGORIES.SOUPS.id,
       image: "/dishes/hot-sour-soup.jpg",
       price: 28.0,
       originalPrice: 35.0,
@@ -323,7 +325,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "18",
       name: "番茄蛋汤",
-      category: "汤类",
+      category: DISH_CATEGORIES.SOUPS.id,
       image: "/dishes/tomato-egg-soup.jpg",
       price: 22.0,
       originalPrice: 28.0,
@@ -341,11 +343,11 @@ export const dishesData: { [key: string]: Dish[] } = {
       }
     }
   ],
-  主食类: [
+  [DISH_CATEGORIES.STAPLE_FOOD.id]: [
     {
       id: "8",
       name: "水饺",
-      category: "主食类",
+      category: DISH_CATEGORIES.STAPLE_FOOD.id,
       image: "/dishes/dumplings.jpg",
       price: 20.0,
       originalPrice: 25.0,
@@ -371,7 +373,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "19",
       name: "炒面",
-      category: "主食类",
+      category: DISH_CATEGORIES.STAPLE_FOOD.id,
       image: "/dishes/fried-noodles.jpg",
       price: 25.0,
       originalPrice: 30.0,
@@ -395,7 +397,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "20",
       name: "扬州炒饭",
-      category: "主食类",
+      category: DISH_CATEGORIES.STAPLE_FOOD.id,
       image: "/dishes/yangzhou-rice.jpg",
       price: 28.0,
       originalPrice: 35.0,
@@ -412,11 +414,11 @@ export const dishesData: { [key: string]: Dish[] } = {
       }
     }
   ],
-  酒水: [
+  [DISH_CATEGORIES.DRINKS.id]: [
     {
       id: "9",
       name: "茅台",
-      category: "酒水",
+      category: DISH_CATEGORIES.DRINKS.id,
       image: "/dishes/maotai.jpg",
       price: 1288.0,
       originalPrice: 1588.0,
@@ -429,7 +431,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "21",
       name: "青岛啤酒",
-      category: "酒水",
+      category: DISH_CATEGORIES.DRINKS.id,
       image: "/dishes/tsingtao.jpg",
       price: 8.0,
       originalPrice: 10.0,
@@ -441,7 +443,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "22",
       name: "可乐",
-      category: "酒水",
+      category: DISH_CATEGORIES.DRINKS.id,
       image: "/dishes/cola.jpg",
       price: 5.0,
       originalPrice: 6.0,
@@ -453,7 +455,7 @@ export const dishesData: { [key: string]: Dish[] } = {
     {
       id: "23",
       name: "雪碧",
-      category: "酒水",
+      category: DISH_CATEGORIES.DRINKS.id,
       image: "/dishes/sprite.jpg",
       price: 5.0,
       originalPrice: 6.0,

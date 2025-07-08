@@ -82,17 +82,14 @@ export interface Coupon {
       item_name?: string;
     };
     usage_rules: Array<{
-      rule_type: 'MINIMUM_SPEND' | 'VALID_DAYS_OF_WEEK' | 'VALID_TIME_SLOTS' | 'ITEM_DISCOUNT_SCOPE' | 'STACKABILITY' | 'CONDITIONAL_GIFT_ITEM';
+      rule_type: 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
       params: {
         amount?: number;
-        days?: number[];
-        slots?: Array<{
-          start: string;
-          end: string;
-        }>;
-        category_ids?: string[];
-        allow_stacking?: boolean;
-        required_item_ids?: string[];
+        items?: Array<{ id: string; name: string }>;
+        categories?: Array<{ id: string; name: string }>;
+        required_items?: Array<{ id: string; name: string }>;
+        required_categories?: Array<{ id: string; name: string }>;
+        min_spend?: number;
       };
     }>;
     total_quantity: number;

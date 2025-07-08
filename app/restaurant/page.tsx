@@ -9,6 +9,7 @@ import SearchModal from '../components/SearchModal';
 import Toast from '../components/Toast';
 import DishItem from '../components/DishItem';
 import CouponList from '../components/CouponList';
+import { DISH_CATEGORIES, DISH_CATEGORY_NAMES, getCategoryNameById, type DishCategoryId } from '../types/constants';
 
 const menuData = dishesData;
 
@@ -224,9 +225,9 @@ const Tabs = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (t
 };
 
 const Menu = ({ addToCart }: { addToCart: (item: CartItem) => void }) => {
-    const [selectedCategory, setSelectedCategory] = useState(Object.keys(menuData)[0]);
-    const categories = Object.keys(menuData);
-    const dishes = menuData[selectedCategory as keyof typeof menuData];
+    const [selectedCategory, setSelectedCategory] = useState<DishCategoryId>(DISH_CATEGORIES.DISCOUNT.id);
+    const categories = Object.values(DISH_CATEGORIES);
+    const dishes = menuData[selectedCategory];
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
@@ -255,11 +256,11 @@ const Menu = ({ addToCart }: { addToCart: (item: CartItem) => void }) => {
                 <div className="flex flex-row flex-wrap md:flex-col md:overflow-visible space-x-2 md:space-x-0">
                     {categories.map(category => (
                         <button
-                            key={category}
-                            onClick={() => setSelectedCategory(category)}
-                            className={`py-2 px-3 rounded-lg text-left w-auto md:w-full ${selectedCategory === category ? 'bg-gray-100 font-bold text-gray-900' : 'bg-transparent text-gray-600'}`}
+                            key={category.id}
+                            onClick={() => setSelectedCategory(category.id)}
+                            className={`py-2 px-3 rounded-lg text-left w-auto md:w-full ${selectedCategory === category.id ? 'bg-gray-100 font-bold text-gray-900' : 'bg-transparent text-gray-600'}`}
                         >
-                            <span className="leading-tight">{category}</span>
+                            <span className="leading-tight">{category.name}</span>
                         </button>
                     ))}
                 </div>
@@ -275,10 +276,10 @@ const Menu = ({ addToCart }: { addToCart: (item: CartItem) => void }) => {
                 </div>
             </div>
             <div className="w-full md:w-3/4 bg-white p-4 md:ml-2 rounded-lg">
-                <h3 className="text-lg font-bold mb-4">{selectedCategory}</h3>
-                {dishes.map((dish: Dish, index) => (
+                <h3 className="text-lg font-bold mb-4">{getCategoryNameById(selectedCategory)}</h3>
+                {dishes.map((dish: Dish) => (
                     <DishItem
-                        key={index}
+                        key={dish.id}
                         image={`https://picsum.photos/seed/${dish.name}/200/300`}
                         name={dish.name}
                         tags={dish.tags}

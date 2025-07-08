@@ -1,9 +1,25 @@
 export interface CouponTemplate {
   id: bigint;
   name: string;
-  type: string;
-  value: any;
-  usage_rules: any;
+  type: 'CASH_VOUCHER' | 'PERCENTAGE_DISCOUNT' | 'FREE_ITEM';
+  value: {
+    amount?: number;
+    percentage?: number;
+    max_off?: number;
+    item_id?: string;
+    item_name?: string;
+  };
+  usage_rules: Array<{
+    rule_type: 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
+    params: {
+      amount?: number;
+      items?: Array<{ id: string; name: string }>;
+      categories?: Array<{ id: string; name: string }>;
+      required_items?: Array<{ id: string; name: string }>;
+      required_categories?: Array<{ id: string; name: string }>;
+      min_spend?: number;
+    };
+  }>;
   total_quantity: number;
   issued_quantity: number;
   per_user_limit: number;

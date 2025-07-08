@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dish } from '../stores/dishes';
+import { DishCategoryId } from '../types/constants';
 
 interface UseSearchResult {
   searchQuery: string;
@@ -11,7 +12,7 @@ interface UseSearchResult {
   clearHistory: () => void;
 }
 
-export function useSearch(menuData: Record<string, Dish[]>): UseSearchResult {
+export function useSearch(menuData: Record<DishCategoryId, Dish[]>): UseSearchResult {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Dish[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
