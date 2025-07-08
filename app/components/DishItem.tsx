@@ -1,24 +1,14 @@
 import Image from "next/image";
 import { Plus } from "lucide-react";
-import { DishItemProps, Coupon } from "../types";
+import { DishItemProps, Coupon, DishForCoupon } from "../types";
 import { useState, useEffect } from "react";
-
-// 菜品接口定义（用于优惠券检查）
-interface Dish {
-  id: string;
-  name: string;
-  price?: number;
-  originalPrice: number;
-  category_id: string;
-  category_name?: string;
-}
 
 /**
  * 检查优惠券是否可用于指定菜品
  */
 function checkCouponEligibility(
   coupon: Coupon,
-  dish: Dish
+  dish: DishForCoupon
 ): {
   isEligible: boolean;
   reason?: string;
@@ -43,7 +33,7 @@ function checkCouponEligibility(
           : 0;
         return `${discount}折`;
       case "FREE_ITEM":
-        return `赠品「${template.value.item_name || "指定赠品"}」`;
+        return `赠品「${template.value.dish_name || "指定赠品"}」`;
       default:
         return "";
     }
@@ -92,50 +82,72 @@ function checkCouponEligibility(
   }
 
   // 获取菜品实际价格
-  const dishPrice = dish.price ?? dish.originalPrice;
+  const dishPrice = dish.price ?? dish.originalPrice ?? 0;
 
   // 2. 检查使用规则
   for (const rule of template.usage_rules) {
     switch (rule.rule_type) {
       case "MINIMUM_SPEND":
         // 检查最低消费要求
-        if (rule.params.amount && dishPrice < rule.params.amount) {
+        if (rule.params.min_spend && dishPrice < rule.params.min_spend) {
           return {
             ...baseResult,
             isEligible: false,
-            reason: `需满${rule.params.amount}元可用`,
+            reason: `需满${rule.params.min_spend}元可用`,
           };
         }
         break;
 
       case "ITEM_ELIGIBILITY":
-        // 检查商品限制
-        if (rule.params.items && rule.params.items.length > 0) {
-          const eligibleItems = rule.params.items.map((item) => item.id);
-          if (!eligibleItems.includes(dish.id)) {
-            const itemNames = rule.params.items
-              .map((item) => item.name)
-              .join("、");
-            return {
-              ...baseResult,
-              isEligible: false,
-              reason: `仅限${itemNames}商品可用`,
-            };
-          }
+        // 检查商品和分类限制 (required_items OR required_categories)
+        let isEligible = false;
+        let reasonParts: string[] = [];
+        
+        // 检查指定商品
+        if (rule.params.required_items && rule.params.required_items.length > 0) {
+          const eligibleItemIds = rule.params.required_items.map((item) => item.id);
+          isEligible = isEligible || eligibleItemIds.includes(dish.id);
+          
+          const itemNames = rule.params.required_items
+            .map((item) => item.name)
+            .join("、");
+          reasonParts.push(itemNames);
         }
-        // 检查品类限制
-        if (rule.params.categories && rule.params.categories.length > 0) {
-          const eligibleCategories = rule.params.categories.map(
-            (cat) => cat.id
-          );
-          if (!eligibleCategories.includes(dish.category_id)) {
-            const categoryNames = rule.params.categories
-              .map((cat) => cat.name)
-              .join("、");
+        
+        // 检查分类限制 (OR 关系)
+        if (rule.params.required_categories && rule.params.required_categories.length > 0) {
+          const eligibleCategoryIds = rule.params.required_categories.map((cat) => cat.id);
+          isEligible = isEligible || (dish.category_id ? eligibleCategoryIds.includes(dish.category_id) : false);
+          
+          const categoryNames = rule.params.required_categories
+            .map((cat) => cat.name)
+            .join("、");
+          reasonParts.push(`${categoryNames}类商品`);
+        }
+        
+        // 如果既有商品限制又有分类限制，但都不满足
+        if (((rule.params.required_items && rule.params.required_items.length > 0) || 
+             (rule.params.required_categories && rule.params.required_categories.length > 0)) && !isEligible) {
+          return {
+            ...baseResult,
+            isEligible: false,
+            reason: `仅限${reasonParts.join("或")}可用`,
+          };
+        }
+        
+        // 检查最小消费要求
+        if (rule.params.min_spend && rule.params.min_spend > 0) {
+          let priceToCheck = dishPrice; // 默认情况：菜品价格
+          
+          // 如果指定了 required_items 或 required_categories，并且当前菜品满足条件，则以当前菜品价格为准
+          // 对于单个菜品检查，如果菜品不满足条件，前面已经返回false了
+          // 所以这里直接使用菜品价格即可
+          
+          if (priceToCheck && priceToCheck < rule.params.min_spend) {
             return {
               ...baseResult,
               isEligible: false,
-              reason: `仅限${categoryNames}可用`,
+              reason: `需满${rule.params.min_spend}元可用`,
             };
           }
         }
@@ -143,48 +155,50 @@ function checkCouponEligibility(
 
       case "GIFT_CONDITION":
         if (template.type === "FREE_ITEM") {
-          // 检查商品要求
-          if (
-            rule.params.required_items &&
-            rule.params.required_items.length > 0
-          ) {
-            const requiredItems = rule.params.required_items.map(
-              (item) => item.id
-            );
-            if (!requiredItems.includes(dish.id)) {
-              const itemNames = rule.params.required_items
-                .map((item) => item.name)
-                .join("、");
-              return {
-                ...baseResult,
-                isEligible: false,
-                reason: `需购买${itemNames}`,
-              };
-            }
+          // 检查商品和分类要求 (required_items OR required_categories)
+          let giftEligible = false;
+          let giftReasonParts: string[] = [];
+          
+          // 检查指定商品
+          if (rule.params.required_items && rule.params.required_items.length > 0) {
+            const requiredItemIds = rule.params.required_items.map((item) => item.id);
+            giftEligible = giftEligible || requiredItemIds.includes(dish.id);
+            
+            const itemNames = rule.params.required_items
+              .map((item) => item.name)
+              .join("、");
+            giftReasonParts.push(itemNames);
           }
-          // 检查品类要求
-          if (
-            rule.params.required_categories &&
-            rule.params.required_categories.length > 0
-          ) {
-            const requiredCategories = rule.params.required_categories.map(
-              (cat) => cat.id
-            );
-            if (!requiredCategories.includes(dish.category_id)) {
-              const categoryNames = rule.params.required_categories
-                .map((cat) => cat.name)
-                .join("、");
-              return {
-                ...baseResult,
-                isEligible: false,
-                reason: `需购买${categoryNames}类商品`,
-              };
-            }
+          
+          // 检查分类要求 (OR 关系)
+          if (rule.params.required_categories && rule.params.required_categories.length > 0) {
+            const requiredCategoryIds = rule.params.required_categories.map((cat) => cat.id);
+            giftEligible = giftEligible || (dish.category_id ? requiredCategoryIds.includes(dish.category_id) : false);
+            
+            const categoryNames = rule.params.required_categories
+              .map((cat) => cat.name)
+              .join("、");
+            giftReasonParts.push(`${categoryNames}类商品`);
+          }
+          
+          // 如果有商品或分类限制，但都不满足
+          if (((rule.params.required_items && rule.params.required_items.length > 0) || 
+               (rule.params.required_categories && rule.params.required_categories.length > 0)) && !giftEligible) {
+            return {
+              ...baseResult,
+              isEligible: false,
+              reason: `需购买${giftReasonParts.join("或")}`,
+            };
           }
 
-          // 检查是否存在最低消费限制
+          // 检查最小消费限制
           if (rule.params.min_spend && rule.params.min_spend > 0) {
-            if (dishPrice < rule.params.min_spend) {
+            let priceToCheck = dishPrice; // 默认情况：菜品价格
+            
+            // 对于单个菜品，如果指定了商品或分类限制且菜品满足条件，则以菜品价格为准
+            // 如果菜品不满足条件，前面已经返回false了
+            
+            if (priceToCheck && priceToCheck < rule.params.min_spend) {
               return {
                 ...baseResult,
                 isEligible: false,
@@ -202,8 +216,10 @@ function checkCouponEligibility(
 }
 
 export default function DishItem({
+  id,
   image,
   name,
+  category,
   tags = [],
   price,
   originalPrice,
@@ -223,7 +239,7 @@ export default function DishItem({
       type: "CASH_VOUCHER" | "PERCENTAGE_DISCOUNT" | "FREE_ITEM";
       amount?: number;
       percentage?: number;
-      item_name?: string;
+      dish_name?: string;
       couponText: string;
     }>
   >([]);
@@ -266,13 +282,14 @@ export default function DishItem({
   // 检查当前菜品可用的优惠券
   useEffect(() => {
     if (allCoupons.length > 0) {
-      const dish: Dish = {
-        id: name, // 使用菜品名称作为 ID
+      const dish: DishForCoupon = {
+        id, // 使用真实的菜品 ID
         name,
+        dish_name: name, // 添加 dish_name 字段
         price,
         originalPrice,
-        category_id: "default", // 默认分类，实际项目中应该传入真实的分类ID
-        category_name: "默认分类",
+        category_id: category, // 使用真实的分类ID
+        category_name: "默认分类", // 这里可以通过分类ID查询分类名称
       };
 
       const eligible = allCoupons
@@ -294,7 +311,7 @@ export default function DishItem({
                   : 0;
                 return `${discount}折`;
               case "FREE_ITEM":
-                return `赠品「${template.value.item_name || "指定赠品"}」`;
+                return `赠品「${template.value.dish_name || "指定赠品"}」`;
               default:
                 return "";
             }
@@ -305,7 +322,7 @@ export default function DishItem({
             type: template.type,
             amount: template.value.amount,
             percentage: template.value.percentage,
-            item_name: template.value.item_name,
+            dish_name: template.value.dish_name,
             couponText: getCouponValue(),
           };
         })
@@ -315,7 +332,7 @@ export default function DishItem({
         type: "CASH_VOUCHER" | "PERCENTAGE_DISCOUNT" | "FREE_ITEM";
         amount?: number;
         percentage?: number;
-        item_name?: string;
+        dish_name?: string;
         couponText: string;
       }>;
 
@@ -325,9 +342,12 @@ export default function DishItem({
 
   const handleAddToCart = () => {
     addToCart({
+      id,
       name,
       price,
       quantity: 1,
+      category,
+      image,
       options: {},
     });
   };

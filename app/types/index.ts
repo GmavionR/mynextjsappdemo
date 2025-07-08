@@ -1,12 +1,38 @@
-// 导入其他文件中定义的类型
-import { Dish, Tag } from '../stores/dishes';
+// 定义标签类型的枚举或联合类型，方便管理和约束
+export type TagCategory =
+  | "REPEAT_CUSTOMER" // 回头客/复购类
+  | "SALES_RANK" // 销量排名类
+  | "PORTION_FEEDBACK" // 分量反馈
+  | "TASTE_FEEDBACK"; // 味道反馈
+
+// 基础类型定义
+export interface Tag {
+  text: string;
+  category: TagCategory;
+  name?: string;
+  color?: string;
+}
+
+export interface Dish {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  category: string;
+  tags?: Tag[];
+  description?: string;
+}
 
 // 购物车项目类型
 export interface CartItem {
+  id: string;
   name: string;
   price: number;
   quantity: number;
   options?: Record<string, string>;
+  category?: string;
+  image?: string;
 }
 
 // 搜索相关类型
@@ -30,8 +56,10 @@ export interface SpecificationModalProps {
 
 // 菜品项组件属性类型
 export interface DishItemProps {
+  id: string;
   image: string;
   name: string;
+  category: string;
   tags?: Tag[];
   price: number;
   originalPrice: number;
@@ -83,6 +111,7 @@ export interface Coupon {
       max_off?: number;
       item_id?: string;
       item_name?: string;
+      dish_name?: string;
     };
     usage_rules: Array<{
       rule_type: 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
@@ -118,3 +147,14 @@ export interface Coupon {
 export interface CouponListProps {
   coupons: Coupon[];
 }
+
+// 优惠券专用菜品类型
+export interface DishForCoupon {
+  id: string;
+  name: string;
+  dish_name: string;
+  price?: number;
+  originalPrice?: number;
+  category_id?: string;
+  category_name?: string;
+} 

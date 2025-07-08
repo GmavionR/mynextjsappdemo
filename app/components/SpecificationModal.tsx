@@ -38,6 +38,8 @@ export default function SpecificationModal({ dish, onClose, addToCart }: Specifi
             name: dish.name,
             price: totalPrice,
             quantity: 1,
+            category: dish.category,
+            image: dish.image,
             options: selectedOptions
         });
         onClose();

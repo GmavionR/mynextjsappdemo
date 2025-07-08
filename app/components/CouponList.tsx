@@ -77,7 +77,7 @@ function parseCouponForDisplay(coupon: Coupon): CouponDisplayInfo {
       }
       break;
     case "FREE_ITEM":
-      subTitle = `可兑换「${template.value.item_name || "指定赠品"}」`;
+      subTitle = `可兑换「${template.value.dish_name || "指定赠品"}」`;
       break;
     default:
       subTitle = "未知类型优惠";
@@ -110,17 +110,17 @@ function parseCouponForDisplay(coupon: Coupon): CouponDisplayInfo {
 
       switch (rule.rule_type) {
         case "MINIMUM_SPEND":
-          if (params.amount && params.amount > 0) {
+          if (params.min_spend && params.min_spend > 0) {
             rulesDisplay.push({
               type: "MINIMUM_SPEND",
-              text: `满${params.amount}元可用`,
+              text: `满${params.min_spend}元可用`,
             });
           }
           break;
         case "ITEM_ELIGIBILITY":
           hasEligibilityRule = true; // 标记已找到范围规则
-          if (rule.params.items && rule.params.items.length > 0) {
-            const itemNames = rule.params.items
+          if (params.required_items && params.required_items.length > 0) {
+            const itemNames = params.required_items
               .map((item) => `「${item.name}」`)
               .join("、");
             rulesDisplay.push({
@@ -128,10 +128,10 @@ function parseCouponForDisplay(coupon: Coupon): CouponDisplayInfo {
               text: `仅限${itemNames}商品可用`,
             });
           } else if (
-            rule.params.categories &&
-            rule.params.categories.length > 0
+            params.required_categories &&
+            params.required_categories.length > 0
           ) {
-            const categoryNames = rule.params.categories
+            const categoryNames = params.required_categories
               .map((cat) => `「${cat.name}」`)
               .join("、");
             rulesDisplay.push({
@@ -224,7 +224,7 @@ function CouponCard({ coupon }: { coupon: Coupon }) {
           : 0;
         return `${discount}折`;
       case "FREE_ITEM":
-        return `赠品「${template.value.item_name || "指定赠品"}」`;
+        return `赠品「${template.value.dish_name || "指定赠品"}」`;
       default:
         return "";
     }
@@ -235,7 +235,7 @@ function CouponCard({ coupon }: { coupon: Coupon }) {
     const minSpendRule = rules.find(
       (rule) => rule.rule_type === "MINIMUM_SPEND"
     );
-    return minSpendRule?.params.amount ?? 0;
+    return minSpendRule?.params.min_spend ?? 0;
   };
 
   const getStatusStyle = () => {
