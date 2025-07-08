@@ -469,6 +469,14 @@ const CartPopup = ({
                     ))}
                 </div>
                 {!isEmpty && (
+                    <div className="px-4 py-2 border-t border-gray-200">
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-600">商品合计</span>
+                            <span className="font-medium">含{totalItems}件商品 ¥{totalPrice.toFixed(2)}</span>
+                        </div>
+                    </div>
+                )}
+                {!isEmpty && (
                     <div className="p-4 border-t flex justify-between items-center">
                         <div>
                             <p className="text-xl font-bold text-black">¥{totalPrice.toFixed(2)}</p>
