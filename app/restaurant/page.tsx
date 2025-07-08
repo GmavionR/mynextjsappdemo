@@ -1,93 +1,22 @@
-
 'use client';
 import { ChevronLeft, Search, Star, MessageCircle, MoreHorizontal, Plus, ShoppingCart, X, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useMemo, useEffect } from 'react';
+import { dishesData, type Dish, type Specifications, type SpecificationOption, type Tag } from '../stores/dishes';
 
-const menuData = {
-  "折扣超值": [
-    { name: "炸春卷", price: 15.00, originalPrice: 20.00, discount: "7.5折" },
-    { name: "盐酥鸡", price: 22.00, originalPrice: 28.00, discount: "7.8折" }
-  ],
-  "热菜类": [
-    { name: "宫保鸡丁", price: 35.00, originalPrice: 45.00, discount: "7.7折" },
-    { name: "香辣鸡翅", price: 38.00, originalPrice: 48.00, discount: "7.9折" },
-    { name: "羊肉串", price: 25.00, originalPrice: 30.00, discount: "8.3折" },
-    { name: "羊排", price: 55.00, originalPrice: 68.00, discount: "8.0折" },
-    { name: "清蒸桂鱼", price: 68.00, originalPrice: 88.00, discount: "7.7折" },
-    { name: "椒盐龙利鱼", price: 48.00, originalPrice: 60.00, discount: "8.0折" }
-  ],
-  "素菜类": [
-    { name: "炒时蔬", price: 18.00, originalPrice: 22.00, discount: "8.1折" },
-    { name: "干锅花菜", price: 28.00, originalPrice: 35.00, discount: "8.0折" },
-    { name: "香菇炖豆腐", price: 25.00, originalPrice: 32.00, discount: "7.8折" }
-  ],
-  "汤类": [
-    { name: "排骨汤", price: 28.00, originalPrice: 35.00, discount: "8.0折" },
-    { name: "酸辣汤", price: 18.00, originalPrice: 22.00, discount: "8.1折" },
-    { name: "鸡茸汤", price: 22.00, originalPrice: 28.00, discount: "7.8折" },
-    {
-        name: "牛肉粉丝汤",
-        price: 32.00,
-        originalPrice: 40.00,
-        discount: "8.0折",
-        isSelectable: true,
-        specifications: {
-            "规格": [
-                { name: "小份", price: 0 },
-                { name: "中份", price: 2 },
-                { name: "大份", price: 5 }
-            ],
-            "辣度": [
-                { name: "不辣", price: 0 },
-                { name: "微辣", price: 0 },
-                { name: "中辣", price: 0 },
-                { name: "特辣", price: 0 }
-            ],
-            "温度": [
-                { name: "常温", price: 0 },
-                { name: "冰镇", price: 0 }
-            ],
-            "饮料": [
-                { name: "可口可乐", price: 0 },
-                { name: "雪碧", price: 1 },
-                { name: "美年达", price: 3 }
-            ]
-        }
-    }
-  ],
-  "咸菜小碟": [
-    { name: "酸辣白菜", price: 8.00, originalPrice: 10.00, discount: "8.0折" },
-    { name: "萝卜丁", price: 6.00, originalPrice: 8.00, discount: "7.5折" },
-    { name: "咸菜", price: 5.00, originalPrice: 6.00, discount: "8.3折" }
-  ],
-  "主食类": [
-    { name: "白米饭", price: 3.00, originalPrice: 4.00, discount: "7.5折" },
-    { name: "刀削面", price: 15.00, originalPrice: 18.00, discount: "8.3折" },
-    { name: "水饺", price: 20.00, originalPrice: 25.00, discount: "8.0折" }
-  ],
-  "酒水": [
-    { name: "青岛啤酒", price: 8.00, originalPrice: 10.00, discount: "8.0折" },
-    { name: "燕京啤酒", price: 8.00, originalPrice: 10.00, discount: "8.0折" },
-    { name: "五粮液", price: 888.00, originalPrice: 1088.00, discount: "8.1折" },
-    { name: "茅台", price: 1288.00, originalPrice: 1588.00, discount: "8.1折" },
-    { name: "汾酒", price: 388.00, originalPrice: 488.00, discount: "7.9折" },
-    { name: "可乐", price: 5.00, originalPrice: 6.00, discount: "8.3折" },
-    { name: "雪碧", price: 5.00, originalPrice: 6.00, discount: "8.3折" }
-  ],
-    "精选套餐": [
-    { name: "单人套餐", price: 48.00, originalPrice: 68.00, discount: "7.0折" },
-    { name: "双人套餐", price: 88.00, originalPrice: 128.00, discount: "6.8折" }
-  ]
-};
+const menuData = dishesData;
 
 const RestaurantPage = () => {
   const [activeTab, setActiveTab] = useState('点菜');
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Dish[]>([]);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isCartOpen) {
+    if (isCartOpen || isSearchOpen) {
       document.body.classList.add('overflow-hidden');
     } else {
       document.body.classList.remove('overflow-hidden');
@@ -95,7 +24,58 @@ const RestaurantPage = () => {
     return () => {
       document.body.classList.remove('overflow-hidden');
     };
-  }, [isCartOpen]);
+  }, [isCartOpen, isSearchOpen]);
+
+  // 加载搜索历史
+  useEffect(() => {
+    const history = localStorage.getItem('searchHistory');
+    if (history) {
+      setSearchHistory(JSON.parse(history));
+    }
+  }, []);
+
+  // 保存搜索历史
+  const saveToHistory = (query: string) => {
+    if (!query.trim()) return;
+    
+    const newHistory = [
+      query,
+      ...searchHistory.filter(item => item !== query)
+    ].slice(0, 10); // 只保留最近10条记录
+    
+    setSearchHistory(newHistory);
+    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  };
+
+  // 清空搜索历史
+  const clearHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    // 搜索所有分类中的菜品
+    const results: Dish[] = [];
+    Object.values(menuData).forEach(dishes => {
+      dishes.forEach(dish => {
+        if (dish.name.toLowerCase().includes(query.toLowerCase())) {
+          results.push(dish);
+        }
+      });
+    });
+    setSearchResults(results);
+  };
+
+  const handleSearchSubmit = (query: string) => {
+    handleSearch(query);
+    saveToHistory(query);
+  };
 
   const addToCart = (item: any) => {
     setCart(prevCart => {
@@ -129,7 +109,7 @@ const RestaurantPage = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="bg-white min-h-screen pb-24">
-        <BannerAndHeader />
+        <BannerAndHeader onSearchClick={() => setIsSearchOpen(true)} />
         <div className="p-4 relative z-10">
           <RestaurantInfoCard />
         </div>
@@ -144,12 +124,24 @@ const RestaurantPage = () => {
         </div>
         <CartFooter cart={cart} toggleCart={() => setIsCartOpen(!isCartOpen)} />
         {isCartOpen && <CartPopup cart={cart} onClose={() => setIsCartOpen(false)} updateQuantity={updateQuantity} clearCart={clearCart} />}
+        {isSearchOpen && (
+          <SearchModal 
+            onClose={() => setIsSearchOpen(false)} 
+            searchQuery={searchQuery}
+            onSearch={handleSearch}
+            onSearchSubmit={handleSearchSubmit}
+            searchResults={searchResults}
+            searchHistory={searchHistory}
+            clearHistory={clearHistory}
+            addToCart={addToCart}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-const BannerAndHeader = () => (
+const BannerAndHeader = ({ onSearchClick }: { onSearchClick: () => void }) => (
     <div className="relative">
         <Image 
             src="/20250707_185154.jpg" 
@@ -160,7 +152,7 @@ const BannerAndHeader = () => (
         />
         <div className="absolute top-0 left-0 right-0 p-4 flex justify-end items-center bg-gradient-to-b from-black/50 to-transparent">
             <div className="flex items-center space-x-2 md:space-x-3">
-                <button className="text-white bg-black/30 rounded-full p-1"><Search size={20} /></button>
+                <button onClick={onSearchClick} className="text-white bg-black/30 rounded-full p-1"><Search size={20} /></button>
                 <button className="text-white bg-black/30 rounded-full p-1"><MoreHorizontal size={20} /></button>
             </div>
         </div>
@@ -254,7 +246,7 @@ const Menu = ({ addToCart }: { addToCart: (item: any) => void }) => {
                         key={index}
                         image={`https://picsum.photos/seed/${dish.name}/200/300`}
                         name={dish.name}
-                        tags={[`月售${Math.floor(Math.random() * 200)}+`, `好评率${Math.floor(Math.random() * 10) + 90}%`]}
+                        tags={dish.tags}
                         price={dish.price}
                         originalPrice={dish.originalPrice}
                         discount={dish.discount}
@@ -272,7 +264,7 @@ const Menu = ({ addToCart }: { addToCart: (item: any) => void }) => {
 type MenuItemProps = {
   image: string;
   name: string;
-  tags: string[];
+  tags?: Tag[];
   price: number;
   originalPrice: number;
   discount: string;
@@ -286,7 +278,7 @@ type MenuItemProps = {
 const MenuItem = ({ 
   image, 
   name, 
-  tags, 
+  tags = [], 
   price, 
   originalPrice, 
   discount, 
@@ -304,7 +296,15 @@ const MenuItem = ({
     <div className="ml-0 sm:ml-4 mt-2 sm:mt-0 flex-grow w-full">
       <h4 className="text-lg font-bold">{name}</h4>
       <div className="flex flex-wrap items-center text-xs text-orange-500 mt-1">
-          {tags.map(tag => <span key={tag} className="bg-orange-100 mr-2 mb-1 px-2 py-1 rounded">{tag}</span>)}
+          {tags.map((tag, index) => (
+            <span key={index} className={`mr-2 mb-1 px-2 py-1 rounded ${
+              tag.category === 'REPEAT_CUSTOMER' || tag.category === 'SALES_RANK' 
+                ? 'bg-yellow-100 text-yellow-700'
+                : 'bg-orange-100'
+            }`}>
+              {tag.text}
+            </span>
+          ))}
       </div>
       <span className="border border-red-500 text-red-500 text-xs px-2 py-0.5 rounded mt-1 inline-block">{discount}</span>
       <div className="flex justify-between items-end mt-2">
@@ -452,7 +452,7 @@ const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], 
 
     return (
         <div className="fixed inset-0 z-40 flex items-end bg-black/50" onClick={onClose}>
-            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[50vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[50vh] flex flex-col max-w-7xl mx-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="font-bold text-lg">已选购商品</h3>
                     <button onClick={clearCart} className="text-sm text-gray-500 flex items-center"><Trash2 className="w-4 h-4 mr-1" />清空</button>
@@ -498,6 +498,138 @@ const CartPopup = ({ cart, onClose, updateQuantity, clearCart }: { cart: any[], 
             </div>
         </div>
     );
+};
+
+const SearchModal = ({ 
+  onClose, 
+  searchQuery, 
+  onSearch,
+  onSearchSubmit,
+  searchResults,
+  searchHistory,
+  clearHistory,
+  addToCart
+}: { 
+  onClose: () => void;
+  searchQuery: string;
+  onSearch: (query: string) => void;
+  onSearchSubmit: (query: string) => void;
+  searchResults: Dish[];
+  searchHistory: string[];
+  clearHistory: () => void;
+  addToCart: (item: any) => void;
+}) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearchSubmit(searchQuery);
+  };
+
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [isSpecModalOpen, setIsSpecModalOpen] = useState(false);
+
+  const handleDishSelect = (dish: Dish) => {
+    if (dish.isSelectable) {
+      setSelectedDish(dish);
+      setIsSpecModalOpen(true);
+    } else {
+      addToCart({ 
+        name: dish.name, 
+        price: dish.price,
+        options: {}
+      });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white z-50">
+      <div className="sticky top-0 bg-white shadow-sm">
+        <div className="flex items-center p-4 gap-3">
+          <button onClick={onClose} className="p-2">
+            <ChevronLeft size={24} />
+          </button>
+          <form onSubmit={handleSubmit} className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearch(e.target.value)}
+                placeholder="搜索菜品"
+                className="w-full py-2 pl-10 pr-4 bg-gray-100 rounded-full outline-none"
+                autoFocus
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="p-4">
+        {searchQuery ? (
+          <>
+            <div className="text-sm text-gray-500 mb-4">
+              {searchResults.length ? `找到 ${searchResults.length} 个相关菜品` : '未找到相关菜品'}
+            </div>
+            <div className="space-y-6">
+              {searchResults.map((dish, index) => (
+                <MenuItem
+                  key={index}
+                  image={`https://picsum.photos/seed/${dish.name}/200/300`}
+                  name={dish.name}
+                  tags={dish.tags}
+                  price={dish.price}
+                  originalPrice={dish.originalPrice}
+                  discount={dish.discount}
+                  isSelectable={dish.isSelectable}
+                  onSelect={() => handleDishSelect(dish)}
+                  addToCart={addToCart}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div>
+            {searchHistory.length > 0 ? (
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-gray-500 text-sm">搜索历史</h3>
+                  <button 
+                    onClick={clearHistory}
+                    className="text-gray-400 text-sm hover:text-gray-600"
+                  >
+                    清空历史记录
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {searchHistory.map((query, index) => (
+                    <button
+                      key={index}
+                      onClick={() => onSearchSubmit(query)}
+                      className="px-4 py-1.5 bg-gray-100 rounded-full text-sm text-gray-600 hover:bg-gray-200"
+                    >
+                      {query}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 mt-8">
+                <Search size={48} className="mx-auto mb-4 text-gray-300" />
+                <p>搜索你想要的菜品</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isSpecModalOpen && selectedDish && (
+        <SpecificationModal 
+          dish={selectedDish} 
+          onClose={() => setIsSpecModalOpen(false)} 
+          addToCart={addToCart} 
+        />
+      )}
+    </div>
+  );
 };
 
 export default RestaurantPage;

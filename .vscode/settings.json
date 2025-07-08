@@ -1,4 +1,7 @@
 {
     "IDX.aI.enableInlineCompletion": true,
-    "IDX.aI.enableCodebaseIndexing": true
+    "IDX.aI.enableCodebaseIndexing": true,
+    "debug.javascript.defaultRuntimeExecutable": {
+        "pwa-node": "c:\\users\\40294\\appdata\\local\\mise\\shims\\node"
+    }
 }
