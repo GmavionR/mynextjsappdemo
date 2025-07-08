@@ -1,46 +1,11 @@
 import { ChevronRight } from "lucide-react";
-import { Coupon } from "../types";
-
-interface CouponDisplayInfo {
-  mainTitle: string;
-  subTitle: string;
-  rules: Array<{
-    type: string;
-    text: string;
-  }>;
-}
-
-type CouponTemplateValue = {
-  amount?: number;
-  percentage?: number;
-  max_off?: number;
-  item_id?: string;
-  item_name?: string;
-};
-
-type UsageRuleParams = {
-  amount?: number;
-  items?: Array<{ id: string; name: string }>;
-  categories?: Array<{ id: string; name: string }>;
-  required_items?: Array<{ id: string; name: string }>;
-  required_categories?: Array<{ id: string; name: string }>;
-  min_spend?: number;
-};
-
-type UsageRule = {
-  rule_type: "MINIMUM_SPEND" | "ITEM_ELIGIBILITY" | "GIFT_CONDITION";
-  params: UsageRuleParams;
-};
-
-// 菜品接口定义
-interface Dish {
-  id: string;
-  name: string;
-  price?: number; // 实际支付价格
-  originalPrice: number; // 原价
-  category_id: string;
-  category_name: string;
-}
+import { 
+  Coupon, 
+  CouponDisplayInfo, 
+  CouponTemplateValue, 
+  UsageRuleParams, 
+  UsageRule 
+} from "../types";
 
 
 /**

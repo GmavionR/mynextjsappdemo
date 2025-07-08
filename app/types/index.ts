@@ -109,19 +109,16 @@ export interface Coupon {
       amount?: number;
       percentage?: number;
       max_off?: number;
-      item_id?: string;
-      item_name?: string;
+      dish_id?: string;
       dish_name?: string;
+      dish_price?: number;
     };
     usage_rules: Array<{
       rule_type: 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
       params: {
-        amount?: number;
-        items?: Array<{ id: string; name: string }>;
-        categories?: Array<{ id: string; name: string }>;
+        min_spend?: number;
         required_items?: Array<{ id: string; name: string }>;
         required_categories?: Array<{ id: string; name: string }>;
-        min_spend?: number;
       };
     }>;
     total_quantity: number;
@@ -148,13 +145,35 @@ export interface CouponListProps {
   coupons: Coupon[];
 }
 
-// 优惠券专用菜品类型
-export interface DishForCoupon {
-  id: string;
-  name: string;
-  dish_name: string;
-  price?: number;
-  originalPrice?: number;
-  category_id?: string;
-  category_name?: string;
-} 
+// 优惠券显示信息接口
+export interface CouponDisplayInfo {
+  mainTitle: string;
+  subTitle: string;
+  rules: Array<{
+    type: string;
+    text: string;
+  }>;
+}
+
+// 优惠券模板值类型
+export type CouponTemplateValue = {
+  amount?: number;
+  percentage?: number;
+  max_off?: number;
+  dish_id?: string;
+  dish_name?: string;
+  dish_price?: number;
+};
+
+// 使用规则参数类型
+export type UsageRuleParams = {
+  min_spend?: number;
+  required_items?: Array<{ id: string; name: string }>;
+  required_categories?: Array<{ id: string; name: string }>;
+};
+
+// 使用规则类型
+export type UsageRule = {
+  rule_type: "MINIMUM_SPEND" | "ITEM_ELIGIBILITY" | "GIFT_CONDITION";
+  params: UsageRuleParams;
+};
