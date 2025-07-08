@@ -4,7 +4,7 @@ import { DishItemProps, Coupon, DishForCoupon } from "../types";
 import { useState, useEffect } from "react";
 
 /**
- * 检查优惠券是否可用于指定菜品
+ * 检查优惠券是否可用于指定菜品（与购物车校验逻辑保持一致）
  */
 function checkCouponEligibility(
   coupon: Coupon,
@@ -47,22 +47,17 @@ function checkCouponEligibility(
     couponInfo: {
       id: coupon.id,
       name: coupon.coupon_templates.name,
-      couponText: getCouponValue(), // 获取优惠券文本描述
+      couponText: getCouponValue(),
     },
   };
 
-  // 1. 检查优惠券基本状态
-  if (coupon.status === "EXPIRED") {
-    return { ...baseResult, isEligible: false, reason: "优惠券已过期" };
-  }
-  if (coupon.status === "USED") {
+  // 1. 检查优惠券基本状态（快速失败）
+  const now = new Date();
+  
+  if (coupon.status !== "UNUSED") {
     return { ...baseResult, isEligible: false, reason: "优惠券已使用" };
   }
 
-  // 检查优惠券是否在有效期内
-  const now = new Date();
-
-  // 检查优惠券过期时间
   if (new Date(coupon.expires_at) < now) {
     return { ...baseResult, isEligible: false, reason: "优惠券已过期" };
   }
@@ -84,135 +79,121 @@ function checkCouponEligibility(
   // 获取菜品实际价格
   const dishPrice = dish.price ?? dish.originalPrice ?? 0;
 
-  // 2. 检查使用规则
+  // 2. 规则逐一校验（与购物车版本保持一致）
   for (const rule of template.usage_rules) {
-    switch (rule.rule_type) {
-      case "MINIMUM_SPEND":
-        // 检查最低消费要求
-        if (rule.params.min_spend && dishPrice < rule.params.min_spend) {
-          return {
-            ...baseResult,
-            isEligible: false,
-            reason: `需满${rule.params.min_spend}元可用`,
-          };
-        }
-        break;
-
-      case "ITEM_ELIGIBILITY":
-        // 检查商品和分类限制 (required_items OR required_categories)
-        let isEligible = false;
-        let reasonParts: string[] = [];
-        
-        // 检查指定商品
-        if (rule.params.required_items && rule.params.required_items.length > 0) {
-          const eligibleItemIds = rule.params.required_items.map((item) => item.id);
-          isEligible = isEligible || eligibleItemIds.includes(dish.id);
-          
-          const itemNames = rule.params.required_items
-            .map((item) => item.name)
-            .join("、");
-          reasonParts.push(itemNames);
-        }
-        
-        // 检查分类限制 (OR 关系)
-        if (rule.params.required_categories && rule.params.required_categories.length > 0) {
-          const eligibleCategoryIds = rule.params.required_categories.map((cat) => cat.id);
-          isEligible = isEligible || (dish.category_id ? eligibleCategoryIds.includes(dish.category_id) : false);
-          
-          const categoryNames = rule.params.required_categories
-            .map((cat) => cat.name)
-            .join("、");
-          reasonParts.push(`${categoryNames}类商品`);
-        }
-        
-        // 如果既有商品限制又有分类限制，但都不满足
-        if (((rule.params.required_items && rule.params.required_items.length > 0) || 
-             (rule.params.required_categories && rule.params.required_categories.length > 0)) && !isEligible) {
-          return {
-            ...baseResult,
-            isEligible: false,
-            reason: `仅限${reasonParts.join("或")}可用`,
-          };
-        }
-        
-        // 检查最小消费要求
-        if (rule.params.min_spend && rule.params.min_spend > 0) {
-          let priceToCheck = dishPrice; // 默认情况：菜品价格
-          
-          // 如果指定了 required_items 或 required_categories，并且当前菜品满足条件，则以当前菜品价格为准
-          // 对于单个菜品检查，如果菜品不满足条件，前面已经返回false了
-          // 所以这里直接使用菜品价格即可
-          
-          if (priceToCheck && priceToCheck < rule.params.min_spend) {
-            return {
-              ...baseResult,
-              isEligible: false,
-              reason: `需满${rule.params.min_spend}元可用`,
-            };
-          }
-        }
-        break;
-
-      case "GIFT_CONDITION":
-        if (template.type === "FREE_ITEM") {
-          // 检查商品和分类要求 (required_items OR required_categories)
-          let giftEligible = false;
-          let giftReasonParts: string[] = [];
-          
-          // 检查指定商品
-          if (rule.params.required_items && rule.params.required_items.length > 0) {
-            const requiredItemIds = rule.params.required_items.map((item) => item.id);
-            giftEligible = giftEligible || requiredItemIds.includes(dish.id);
-            
-            const itemNames = rule.params.required_items
-              .map((item) => item.name)
-              .join("、");
-            giftReasonParts.push(itemNames);
-          }
-          
-          // 检查分类要求 (OR 关系)
-          if (rule.params.required_categories && rule.params.required_categories.length > 0) {
-            const requiredCategoryIds = rule.params.required_categories.map((cat) => cat.id);
-            giftEligible = giftEligible || (dish.category_id ? requiredCategoryIds.includes(dish.category_id) : false);
-            
-            const categoryNames = rule.params.required_categories
-              .map((cat) => cat.name)
-              .join("、");
-            giftReasonParts.push(`${categoryNames}类商品`);
-          }
-          
-          // 如果有商品或分类限制，但都不满足
-          if (((rule.params.required_items && rule.params.required_items.length > 0) || 
-               (rule.params.required_categories && rule.params.required_categories.length > 0)) && !giftEligible) {
-            return {
-              ...baseResult,
-              isEligible: false,
-              reason: `需购买${giftReasonParts.join("或")}`,
-            };
-          }
-
-          // 检查最小消费限制
-          if (rule.params.min_spend && rule.params.min_spend > 0) {
-            let priceToCheck = dishPrice; // 默认情况：菜品价格
-            
-            // 对于单个菜品，如果指定了商品或分类限制且菜品满足条件，则以菜品价格为准
-            // 如果菜品不满足条件，前面已经返回false了
-            
-            if (priceToCheck && priceToCheck < rule.params.min_spend) {
-              return {
-                ...baseResult,
-                isEligible: false,
-                reason: `需满${rule.params.min_spend}元可用`,
-              };
-            }
-          }
-        }
-        break;
+    const ruleResult = checkSingleRuleForDish(rule, dish, dishPrice);
+    if (!ruleResult.isValid) {
+      return { ...baseResult, isEligible: false, reason: ruleResult.reason };
     }
   }
 
   // 3. 所有规则都通过，返回可用
   return { ...baseResult, isEligible: true };
+}
+
+/**
+ * 检查单个规则是否适用于指定菜品（与购物车版本保持一致的逻辑）
+ */
+function checkSingleRuleForDish(
+  rule: any, 
+  dish: DishForCoupon, 
+  dishPrice: number
+): { isValid: boolean; reason?: string } {
+  switch (rule.rule_type) {
+    case 'MINIMUM_SPEND':
+      // 全局最低消费，对于单个菜品就是菜品价格
+      if (rule.params.min_spend && dishPrice < rule.params.min_spend) {
+        return {
+          isValid: false,
+          reason: `需消费满${rule.params.min_spend}元，当前菜品仅${dishPrice.toFixed(2)}元`
+        };
+      }
+      return { isValid: true };
+
+    case 'ITEM_ELIGIBILITY':
+      // 检查商品和分类限制 (required_items OR required_categories)
+      let isEligible = false;
+      
+      // 检查指定商品 - 只要满足其中一个条件即可
+      if (rule.params.required_items && rule.params.required_items.length > 0) {
+        const eligibleItemIds = rule.params.required_items.map((item: any) => item.id);
+        isEligible = isEligible || eligibleItemIds.includes(dish.id);
+      }
+      
+      // 检查分类限制 - 只要满足其中一个条件即可
+      if (rule.params.required_categories && rule.params.required_categories.length > 0) {
+        const eligibleCategoryIds = rule.params.required_categories.map((cat: any) => cat.id);
+        isEligible = isEligible || (dish.category_id ? eligibleCategoryIds.includes(dish.category_id) : false);
+      }
+      
+      // 如果有限制条件但都不满足
+      if (((rule.params.required_items && rule.params.required_items.length > 0) || 
+           (rule.params.required_categories && rule.params.required_categories.length > 0)) && !isEligible) {
+        const itemNames = rule.params.required_items?.map((i: any) => i.name).join('、') || '';
+        const categoryNames = rule.params.required_categories?.map((cat: any) => cat.name).join('、') || '';
+        const restriction = [itemNames, categoryNames].filter(Boolean).join('或');
+        return {
+          isValid: false,
+          reason: `仅限${restriction}商品可用`
+        };
+      }
+      
+      // 检查范围内的最小消费（与购物车版本一致）
+      if (rule.params.min_spend && rule.params.min_spend > 0) {
+        // 对于单个菜品，如果满足商品/分类条件，则以该菜品价格为判断标准
+        if (dishPrice < rule.params.min_spend) {
+          return {
+            isValid: false,
+            reason: `需消费满${rule.params.min_spend}元，当前菜品仅${dishPrice.toFixed(2)}元`
+          };
+        }
+      }
+      
+      return { isValid: true };
+
+    case 'GIFT_CONDITION':
+      // 检查赠品条件
+      let isRequiredItem = false;
+      
+      // 检查必需商品ID（OR逻辑）
+      if (rule.params.required_items && rule.params.required_items.length > 0) {
+        const requiredItemIds = rule.params.required_items.map((item: any) => item.id);
+        isRequiredItem = isRequiredItem || requiredItemIds.includes(dish.id);
+      }
+      
+      // 检查必需分类（OR逻辑）
+      if (rule.params.required_categories && rule.params.required_categories.length > 0) {
+        const requiredCategoryIds = rule.params.required_categories.map((cat: any) => cat.id);
+        isRequiredItem = isRequiredItem || (dish.category_id ? requiredCategoryIds.includes(dish.category_id) : false);
+      }
+      
+      // 如果指定了条件但不满足
+      if ((rule.params.required_items?.length > 0 || rule.params.required_categories?.length > 0) && !isRequiredItem) {
+        const itemNames = rule.params.required_items?.map((i: any) => i.name).join('、') || '';
+        const categoryNames = rule.params.required_categories?.map((cat: any) => cat.name).join('、') || '';
+        const requirement = [itemNames, categoryNames].filter(Boolean).join('或');
+        return {
+          isValid: false,
+          reason: `需购买${requirement}商品`
+        };
+      }
+      
+      // 检查范围内的最低消费
+      if (rule.params.min_spend && rule.params.min_spend > 0) {
+        // 对于单个菜品，如果满足赠品条件，则以该菜品价格为判断标准
+        if (dishPrice < rule.params.min_spend) {
+          return {
+            isValid: false,
+            reason: `需消费满${rule.params.min_spend}元，当前菜品仅${dishPrice.toFixed(2)}元`
+          };
+        }
+      }
+      
+      return { isValid: true };
+
+    default:
+      return { isValid: true };
+  }
 }
 
 export default function DishItem({
@@ -285,11 +266,9 @@ export default function DishItem({
       const dish: DishForCoupon = {
         id, // 使用真实的菜品 ID
         name,
-        dish_name: name, // 添加 dish_name 字段
         price,
         originalPrice,
         category_id: category, // 使用真实的分类ID
-        category_name: "默认分类", // 这里可以通过分类ID查询分类名称
       };
 
       const eligible = allCoupons

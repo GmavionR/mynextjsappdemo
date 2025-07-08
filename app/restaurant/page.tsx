@@ -3,21 +3,13 @@ import { ChevronLeft, Search, Star, MessageCircle, MoreHorizontal, Plus, Shoppin
 import Image from 'next/image';
 import { useState, useMemo, useEffect } from 'react';
 import { dishesData, type Dish, type Specifications, type SpecificationOption, type Tag } from '../stores/dishes';
-import { CartItem, Coupon } from '../types';
+import { CartItem, Coupon, CouponEligibilityResult } from '../types';
 import { useSearch } from '../hooks/useSearch';
 import SearchModal from '../components/SearchModal';
 import Toast from '../components/Toast';
 import DishItem from '../components/DishItem';
 import CouponList from '../components/CouponList';
 import { DISH_CATEGORIES, DISH_CATEGORY_NAMES, getCategoryNameById, type DishCategoryId } from '../types/constants';
-
-// 优惠券检查结果类型
-interface CouponEligibilityResult {
-  isEligible: boolean;
-  reason?: string;
-  savings: number;
-  associatedCartItemIndex?: number;
-}
 
 // 检查优惠券是否可用于当前购物车
 const checkCouponEligibilityForCart = (coupon: Coupon, cart: CartItem[]): CouponEligibilityResult => {
@@ -200,9 +192,10 @@ const calculateDiscountAmount = (
 
     case 'PERCENTAGE_DISCOUNT':
       if (typeof associatedCartItemIndex === 'number') {
-        // 限定范围的折扣，只对特定商品打折
+        // 限定范围的折扣，只对特定商品的一份打折
         const item = cart[associatedCartItemIndex];
-        savings = item.price * (template.value.percentage / 100);
+        const discountAmount = item.price * (template.value.percentage / 100);
+        savings = discountAmount;
       } else {
         // 全场折扣
         const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -216,11 +209,14 @@ const calculateDiscountAmount = (
       break;
 
     case 'FREE_ITEM':
-      // 赠品优惠金额
-      if (template.value.amount) {
+      // 赠品优惠金额，使用 dish_price 字段
+      if (template.value.dish_price) {
+        savings = template.value.dish_price;
+      } else if (template.value.amount) {
+        // 备选方案：使用 amount 字段
         savings = template.value.amount;
       } else {
-        // 如果没有缓存价格，可以根据dish_id查询，这里先用默认值
+        // 如果都没有，则没有优惠
         savings = 0;
       }
       break;
@@ -274,25 +270,25 @@ const RestaurantPage = () => {
   const addToCart = (item: CartItem) => {
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(cartItem => 
-        cartItem.name === item.name && 
+        cartItem.id === item.id && 
         JSON.stringify(cartItem.options) === JSON.stringify(item.options)
       );
       
       if (existingItemIndex > -1) {
         const newCart = [...prevCart];
-        newCart[existingItemIndex].quantity++;
+        newCart[existingItemIndex].quantity += (item.quantity || 1);
         return newCart;
       } else {
-        return [...prevCart, { ...item, quantity: 1 }];
+        return [...prevCart, { ...item, quantity: item.quantity || 1 }];
       }
     });
     showSuccessToast(item.name);
   };
 
-  const updateQuantity = (name: string, options: Record<string, string>, delta: number) => {
+  const updateQuantity = (id: string, options: Record<string, string>, delta: number) => {
     setCart(prevCart => {
       return prevCart.map(item => {
-        if (item.name === name && JSON.stringify(item.options) === JSON.stringify(options)) {
+        if (item.id === id && JSON.stringify(item.options) === JSON.stringify(options)) {
           const newQuantity = item.quantity + delta;
           return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
         }
@@ -553,9 +549,13 @@ const SpecificationModal = ({ dish, onClose, addToCart }: { dish: any, onClose: 
 
     const handleAddToCart = () => {
         addToCart({
+            id: dish.id,
             name: dish.name,
             price: totalPrice,
+            quantity: 1,
             options: selectedOptions,
+            category: dish.category,
+            image: dish.image
         });
         onClose();
     };
@@ -734,7 +734,7 @@ const CartPopup = ({
                                         alt={item.name} 
                                         width={48}
                                         height={48}
-                                        className="rounded-md mr-4 w-12 h-12 object-cover" 
+                                        className="rounded-md mr-4 w-12 h-12 object-cover"
                                     />
                                     <div>
                                         <p className="font-semibold">{item.name}</p>
@@ -765,11 +765,23 @@ const CartPopup = ({
                                     </div>
                                 </div>
                                 <div className="flex items-center">
-                                    <span className="font-semibold mr-4">¥{(item.price * item.quantity).toFixed(2)}</span>
+                                    {/* 计算实际显示的价格 */}
+                                    {(() => {
+                                        if (selectedCoupon) {
+                                            const eligibility = checkCouponEligibilityForCart(selectedCoupon, cart);
+                                            if (eligibility.associatedCartItemIndex === index) {
+                                                const savings = eligibility.savings;
+                                                const discountedPrice = Math.max(0, item.price - savings);
+                                                const totalPrice = discountedPrice + (item.price * (item.quantity - 1));
+                                                return <span className="font-semibold mr-4">¥{totalPrice.toFixed(2)}</span>;
+                                            }
+                                        }
+                                        return <span className="font-semibold mr-4">¥{(item.price * item.quantity).toFixed(2)}</span>;
+                                    })()}
                                     <div className="flex items-center">
-                                        <button onClick={() => updateQuantity(item.name, item.options || {}, -1)} className="bg-gray-200 rounded-full w-6 h-6 flex items-center justify-center">-</button>
+                                        <button onClick={() => updateQuantity(item.id, item.options || {}, -1)} className="bg-gray-200 rounded-full w-6 h-6 flex items-center justify-center">-</button>
                                         <span className="mx-2">{item.quantity}</span>
-                                        <button onClick={() => updateQuantity(item.name, item.options || {}, 1)} className="bg-yellow-400 text-white rounded-full w-6 h-6 flex items-center justify-center">+</button>
+                                        <button onClick={() => updateQuantity(item.id, item.options || {}, 1)} className="bg-yellow-400 text-white rounded-full w-6 h-6 flex items-center justify-center">+</button>
                                     </div>
                                 </div>
                             </div>

@@ -32,10 +32,13 @@ export default function SearchModal({
       setIsSpecModalOpen(true);
     } else {
       const cartItem: CartItem = {
+        id: dish.id,
         name: dish.name,
         price: dish.price,
         quantity: 1,
-        options: {}
+        options: {},
+        category: dish.category,
+        image: dish.image
       };
       addToCart(cartItem);
       showSuccessToast(dish.name);
@@ -133,12 +136,14 @@ function SearchResults({
         {searchResults.map((dish, index) => (
           <DishItem
             key={index}
+            id={dish.id}
+            category={dish.category}
             image={`https://picsum.photos/seed/${dish.name}/200/300`}
             name={dish.name}
             tags={dish.tags}
             price={dish.price}
-            originalPrice={dish.originalPrice}
-            discount={dish.discount}
+            originalPrice={dish.originalPrice || dish.price}
+            discount={dish.discount || ""}
             isSelectable={dish.isSelectable}
             onSelect={() => handleDishSelect(dish)}
             addToCart={() => handleDishSelect(dish)}

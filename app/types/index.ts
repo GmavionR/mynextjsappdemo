@@ -41,7 +41,7 @@ export interface SearchProps {
   searchQuery: string;
   onSearch: (query: string) => void;
   onSearchSubmit: (query: string) => void;
-  searchResults: Dish[];
+  searchResults: any[]; // 使用 any[] 来避免类型冲突，因为实际使用的是 stores/dishes 中的 Dish
   searchHistory: string[];
   clearHistory: () => void;
   addToCart: (item: CartItem) => void;
@@ -86,7 +86,7 @@ export interface CartFooterProps {
 export interface CartPopupProps {
   cart: CartItem[];
   onClose: () => void;
-  updateQuantity: (name: string, options: Record<string, string>, delta: number) => void;
+  updateQuantity: (id: string, options: Record<string, string>, delta: number) => void;
   clearCart: () => void;
 }
 
@@ -177,3 +177,20 @@ export type UsageRule = {
   rule_type: "MINIMUM_SPEND" | "ITEM_ELIGIBILITY" | "GIFT_CONDITION";
   params: UsageRuleParams;
 };
+
+// 优惠券检查用的菜品类型
+export interface DishForCoupon {
+  id: string;
+  name: string;
+  price?: number;
+  originalPrice?: number;
+  category_id?: string;
+}
+
+// 优惠券可用性检查结果类型
+export interface CouponEligibilityResult {
+  isEligible: boolean;
+  reason?: string;
+  savings: number;
+  associatedCartItemIndex?: number;
+}
