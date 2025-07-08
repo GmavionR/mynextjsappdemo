@@ -383,9 +383,11 @@ export default function DishItem({
               <span className="text-red-500 text-xl font-bold">
                 ¥{price.toFixed(2)}
               </span>
-              <span className="text-gray-400 line-through ml-2">
-                ¥{originalPrice.toFixed(2)}
-              </span>
+              {originalPrice && (
+                <span className="text-gray-400 line-through ml-2">
+                  ¥{originalPrice.toFixed(2)}
+                </span>
+              )}
             </div>
             {promoPrice && (
               <span className="text-red-500 text-sm">

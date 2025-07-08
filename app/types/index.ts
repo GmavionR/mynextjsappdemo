@@ -1,11 +1,34 @@
-// 定义标签类型的枚举或联合类型，方便管理和约束
+// =============================================
+// 基础类型定义
+// =============================================
+
+// 通用ID和名称类型
+export interface IdName {
+  id: string;
+  name: string;
+}
+
+// 时间戳类型
+export interface Timestamps {
+  created_at: string;
+  updated_at: string;
+}
+
+// 通用状态类型
+export type Status = 'UNUSED' | 'USED' | 'EXPIRED';
+
+// =============================================
+// 菜品相关类型
+// =============================================
+
+// 标签类型枚举
 export type TagCategory =
   | "REPEAT_CUSTOMER" // 回头客/复购类
   | "SALES_RANK" // 销量排名类
   | "PORTION_FEEDBACK" // 分量反馈
   | "TASTE_FEEDBACK"; // 味道反馈
 
-// 基础类型定义
+// 菜品标签接口
 export interface Tag {
   text: string;
   category: TagCategory;
@@ -13,139 +36,122 @@ export interface Tag {
   color?: string;
 }
 
-export interface Dish {
-  id: string;
-  name: string;
+// 基础菜品信息
+export interface DishBase extends IdName {
   price: number;
   originalPrice?: number;
   image: string;
   category: string;
+}
+
+// 完整菜品信息
+export interface Dish extends DishBase {
   tags?: Tag[];
   description?: string;
 }
 
-// 购物车项目类型
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
+// 优惠券检查用的菜品类型（简化版）
+export interface DishForCoupon extends IdName {
+  price?: number;
+  originalPrice?: number;
+  category_id?: string;
+}
+
+// =============================================
+// 购物车相关类型
+// =============================================
+
+// 购物车项目
+export interface CartItem extends DishBase {
   quantity: number;
   options?: Record<string, string>;
-  category?: string;
-  image?: string;
 }
 
-// 搜索相关类型
-export interface SearchProps {
-  onClose: () => void;
-  searchQuery: string;
-  onSearch: (query: string) => void;
-  onSearchSubmit: (query: string) => void;
-  searchResults: any[]; // 使用 any[] 来避免类型冲突，因为实际使用的是 stores/dishes 中的 Dish
-  searchHistory: string[];
-  clearHistory: () => void;
-  addToCart: (item: CartItem) => void;
+// 购物车操作类型
+export type CartOperation = (item: CartItem) => void;
+export type QuantityUpdateOperation = (id: string, options: Record<string, string>, delta: number) => void;
+
+// =============================================
+// 优惠券相关类型
+// =============================================
+
+// 优惠券类型枚举
+export type CouponType = 'CASH_VOUCHER' | 'PERCENTAGE_DISCOUNT' | 'FREE_ITEM';
+
+// 规则类型枚举
+export type RuleType = 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
+
+// 优惠券模板值
+export interface CouponTemplateValue {
+  amount?: number;
+  percentage?: number;
+  max_off?: number;
+  dish_id?: string;
+  dish_name?: string;
+  dish_price?: number;
 }
 
-// 规格选择相关类型
-export interface SpecificationModalProps {
-  dish: Dish;
-  onClose: () => void;
-  addToCart: (item: CartItem) => void;
+// 使用规则参数
+export interface UsageRuleParams {
+  min_spend?: number;
+  required_items?: IdName[];
+  required_categories?: IdName[];
 }
 
-// 菜品项组件属性类型
-export interface DishItemProps {
-  id: string;
-  image: string;
-  name: string;
-  category: string;
-  tags?: Tag[];
-  price: number;
-  originalPrice: number;
-  discount: string;
-  promoPrice?: number | null;
-  isSelectable?: boolean;
-  isSignature?: boolean;
-  onSelect?: () => void;
-  addToCart: (item: CartItem) => void;
+// 使用规则
+export interface UsageRule {
+  rule_type: RuleType;
+  params: UsageRuleParams;
 }
 
-// 导航标签相关类型
-export interface TabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+// 目标用户组
+export interface TargetUserGroup {
+  type: string;
+  tags?: string[];
 }
 
-// 购物车相关类型
-export interface CartFooterProps {
-  cart: CartItem[];
-  toggleCart: () => void;
+// 优惠券模板
+export interface CouponTemplate extends IdName, Timestamps {
+  type: CouponType;
+  value: CouponTemplateValue;
+  usage_rules: UsageRule[];
+  total_quantity: number;
+  issued_quantity: number;
+  per_user_limit: number;
+  issue_start_time: string;
+  issue_end_time: string;
+  validity_type: string;
+  valid_from: string | null;
+  valid_until: string | null;
+  valid_days_after_issue: number;
+  status: string;
+  target_user_group: TargetUserGroup | null;
+  remarks: string;
 }
 
-export interface CartPopupProps {
-  cart: CartItem[];
-  onClose: () => void;
-  updateQuantity: (id: string, options: Record<string, string>, delta: number) => void;
-  clearCart: () => void;
-}
-
-export interface Coupon {
-  id: string;
+// 优惠券
+export interface Coupon extends IdName, Timestamps {
   user_id: string;
   template_id: string;
-  status: 'UNUSED' | 'USED' | 'EXPIRED';
+  status: Status;
   acquired_at: string;
   expires_at: string;
   used_at: string | null;
   used_order_id: string | null;
-  created_at: string;
-  updated_at: string;
-  coupon_templates: {
-    id: string;
-    name: string;
-    type: 'CASH_VOUCHER' | 'PERCENTAGE_DISCOUNT' | 'FREE_ITEM';
-    value: {
-      amount?: number;
-      percentage?: number;
-      max_off?: number;
-      dish_id?: string;
-      dish_name?: string;
-      dish_price?: number;
-    };
-    usage_rules: Array<{
-      rule_type: 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
-      params: {
-        min_spend?: number;
-        required_items?: Array<{ id: string; name: string }>;
-        required_categories?: Array<{ id: string; name: string }>;
-      };
-    }>;
-    total_quantity: number;
-    issued_quantity: number;
-    per_user_limit: number;
-    issue_start_time: string;
-    issue_end_time: string;
-    validity_type: string;
-    valid_from: string | null;
-    valid_until: string | null;
-    valid_days_after_issue: number;
-    status: string;
-    target_user_group: {
-      type: string;
-      tags?: string[];
-    } | null;
-    remarks: string;
-    created_at: string;
-    updated_at: string;
-  };
+  coupon_templates: CouponTemplate;
 }
 
-export interface CouponListProps {
-  coupons: Coupon[];
+// 优惠券可用性检查结果
+export interface CouponEligibilityResult {
+  isEligible: boolean;
+  reason?: string;
+  savings: number;
+  associatedCartItemIndex?: number;
+  associatedDishId?: string;
+  associatedDishName?: string;
 }
 
-// 优惠券显示信息接口
+// 优惠券显示信息
 export interface CouponDisplayInfo {
   mainTitle: string;
   subTitle: string;
@@ -155,42 +161,76 @@ export interface CouponDisplayInfo {
   }>;
 }
 
-// 优惠券模板值类型
-export type CouponTemplateValue = {
-  amount?: number;
-  percentage?: number;
-  max_off?: number;
-  dish_id?: string;
-  dish_name?: string;
-  dish_price?: number;
-};
+// =============================================
+// 组件Props类型
+// =============================================
 
-// 使用规则参数类型
-export type UsageRuleParams = {
-  min_spend?: number;
-  required_items?: Array<{ id: string; name: string }>;
-  required_categories?: Array<{ id: string; name: string }>;
-};
-
-// 使用规则类型
-export type UsageRule = {
-  rule_type: "MINIMUM_SPEND" | "ITEM_ELIGIBILITY" | "GIFT_CONDITION";
-  params: UsageRuleParams;
-};
-
-// 优惠券检查用的菜品类型
-export interface DishForCoupon {
-  id: string;
-  name: string;
-  price?: number;
-  originalPrice?: number;
-  category_id?: string;
+// 通用Modal Props
+export interface BaseModalProps {
+  onClose: () => void;
 }
 
-// 优惠券可用性检查结果类型
-export interface CouponEligibilityResult {
-  isEligible: boolean;
-  reason?: string;
-  savings: number;
-  associatedCartItemIndex?: number;
+// 菜品项组件Props
+export interface DishItemProps extends DishBase {
+  tags?: Tag[];
+  discount: string;
+  promoPrice?: number | null;
+  isSelectable?: boolean;
+  isSignature?: boolean;
+  onSelect?: () => void;
+  addToCart: CartOperation;
 }
+
+// 搜索相关Props
+export interface SearchProps extends BaseModalProps {
+  searchQuery: string;
+  onSearch: (query: string) => void;
+  onSearchSubmit: (query: string) => void;
+  searchResults: any[]; // 保持any[]以避免循环依赖
+  searchHistory: string[];
+  clearHistory: () => void;
+  addToCart: CartOperation;
+}
+
+// 规格选择Modal Props
+export interface SpecificationModalProps extends BaseModalProps {
+  dish: Dish;
+  addToCart: CartOperation;
+}
+
+// 导航标签Props
+export interface TabsProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
+
+// 购物车Footer Props
+export interface CartFooterProps {
+  cart: CartItem[];
+  toggleCart: () => void;
+}
+
+// 购物车弹窗Props
+export interface CartPopupProps extends BaseModalProps {
+  cart: CartItem[];
+  updateQuantity: QuantityUpdateOperation;
+  clearCart: () => void;
+}
+
+// 优惠券列表Props
+export interface CouponListProps {
+  coupons: Coupon[];
+}
+
+// =============================================
+// 导出说明
+// =============================================
+
+/*
+重构说明：
+1. 基础类型：IdName, Timestamps, Status - 提供通用的基础类型
+2. 菜品类型：DishBase -> Dish -> CartItem - 渐进式扩展
+3. 优惠券类型：CouponTemplate -> Coupon - 清晰的模板和实例关系
+4. 组件Props：统一继承 BaseModalProps，减少重复代码
+5. 操作类型：CartOperation, QuantityUpdateOperation - 统一函数签名
+*/
