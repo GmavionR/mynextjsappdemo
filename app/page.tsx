@@ -1,39 +1,7 @@
-"use client";
-import {
-  ChevronLeft,
-  Search,
-  Star,
-  MessageCircle,
-  MoreHorizontal,
-  Plus,
-  ShoppingCart,
-  X,
-  Trash2,
-  AlertCircle,
-} from "lucide-react";
-import Image from "next/image";
-import { useState, useMemo, useEffect } from "react";
-import { type Dish, type Specifications, type SpecificationOption, type Tag } from "./types/index";
-import { useClientDishesState } from "./stores/clientSafeDishesStore";
-import {
-  CartItem,
-  Coupon,
-  CouponEligibilityResult,
-  CouponTemplate,
-  UsageRule,
-  VirtualGiftItem,
-} from "./types";
-import { useSearch } from "./hooks/useSearch";
-import SearchModal from "./components/SearchModal";
-import Toast from "./components/Toast";
-import DishItem from "./components/DishItem";
-import CouponList from "./components/CouponList";
-import {
-  DISH_CATEGORIES,
-  DISH_CATEGORY_NAMES,
-  getCategoryNameById,
-  type DishCategoryId,
-} from "./types/constants";
+import RestaurantClient from "./components/RestaurantClient";
+
+// 这是一个服务器组件，负责页面的初始渲染
+// 所有客户端交互逻辑都在 RestaurantClient 组件中处理
 
 // 检查优惠券是否可用于当前购物车
 const checkCouponEligibilityForCart = (
