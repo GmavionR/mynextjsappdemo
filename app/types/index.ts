@@ -67,6 +67,13 @@ export interface CartItem extends DishBase {
   options?: Record<string, string>;
 }
 
+// 虚拟赠品项目（用于显示但不实际添加到购物车）
+export interface VirtualGiftItem extends DishBase {
+  quantity: number;
+  isVirtualGift: true; // 标记为虚拟赠品
+  couponId: string; // 关联的优惠券ID
+}
+
 // 购物车操作类型
 export type CartOperation = (item: CartItem) => void;
 export type QuantityUpdateOperation = (id: string, options: Record<string, string>, delta: number) => void;

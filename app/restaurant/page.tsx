@@ -178,8 +178,10 @@ const checkSingleRule = (
         };
       }
 
-      // 如果是折扣券，选择最贵的商品进行折扣
-      if (template.type === "PERCENTAGE_DISCOUNT") {
+      // 如果是PERCENTAGE_DISCOUNT折扣券且有商品限制，选择最贵的商品进行折扣
+      if (template.type === "PERCENTAGE_DISCOUNT" && 
+          ((rule.params.required_items && rule.params.required_items.length > 0) ||
+           (rule.params.required_categories && rule.params.required_categories.length > 0))) {
         const eligibleItems = eligibleItemIndices.map((index) => ({
           item: cart[index],
           index,
@@ -307,12 +309,20 @@ const calculateDiscountAmount = (
 
   switch (template.type) {
     case "CASH_VOUCHER":
+      // 代金券直接减免总价
       savings = template.value.amount || 0;
       break;
 
     case "PERCENTAGE_DISCOUNT":
-      if (typeof associatedCartItemIndex === "number") {
-        // 限定范围的折扣，只对特定商品的一份打折
+      // 检查是否有商品限制
+      const hasItemRestrictions = template.usage_rules.some(rule => 
+        rule.rule_type === "ITEM_ELIGIBILITY" && 
+        ((rule.params.required_items && rule.params.required_items.length > 0) ||
+         (rule.params.required_categories && rule.params.required_categories.length > 0))
+      );
+
+      if (hasItemRestrictions && typeof associatedCartItemIndex === "number") {
+        // 有商品限制，只对特定商品的一份打折
         const item = cart[associatedCartItemIndex];
         const percentage =
           typeof template.value.percentage === "number"
@@ -321,7 +331,7 @@ const calculateDiscountAmount = (
         const discountAmount = item.price * (percentage / 100);
         savings = discountAmount;
       } else {
-        // 全场折扣
+        // 无商品限制，全场折扣
         const totalPrice = cart.reduce(
           (sum, item) => sum + item.price * item.quantity,
           0
@@ -1001,32 +1011,25 @@ const CartPopup = ({
                         {Object.values(item.options).join(", ")}
                       </p>
                     )}
-                    {/* 显示优惠信息 */}
+                    {/* 只在多份商品时显示"一份享立减"提示 */}
                     {selectedCoupon &&
                       (() => {
                         const eligibility = checkCouponEligibilityForCart(
                           selectedCoupon,
                           cart
                         );
-                        if (eligibility.associatedCartItemIndex === index) {
+                        const template = selectedCoupon.coupon_templates;
+                        
+                        // PERCENTAGE_DISCOUNT 且有多份商品时显示"一份享立减"
+                        if (template.type === "PERCENTAGE_DISCOUNT" && 
+                            eligibility.associatedCartItemIndex === index &&
+                            item.quantity > 1) {
                           const savings = eligibility.savings;
-                          const discountedPrice = item.price - savings;
                           return (
-                            <div className="text-xs">
-                              {item.quantity === 1 ? (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-gray-400 line-through">
-                                    ¥{item.price.toFixed(2)}
-                                  </span>
-                                  <span className="text-red-500 font-semibold">
-                                    ¥{Math.max(0, discountedPrice).toFixed(2)}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-red-500 font-semibold">
-                                  一份享立减¥{savings.toFixed(2)}
-                                </span>
-                              )}
+                            <div className="text-xs mt-1">
+                              <span className="text-red-500 font-semibold">
+                                一份享立减¥{savings.toFixed(2)}
+                              </span>
                             </div>
                           );
                         }
@@ -1042,21 +1045,38 @@ const CartPopup = ({
                         selectedCoupon,
                         cart
                       );
-                      if (eligibility.associatedCartItemIndex === index) {
+                      const template = selectedCoupon.coupon_templates;
+                      
+                      // 只有PERCENTAGE_DISCOUNT且指定了特定商品时才调整单个商品价格显示
+                      if (template.type === "PERCENTAGE_DISCOUNT" && 
+                          eligibility.associatedCartItemIndex === index) {
                         const savings = eligibility.savings;
-                        const discountedPrice = Math.max(
-                          0,
-                          item.price - savings
-                        );
-                        const totalPrice =
-                          discountedPrice + item.price * (item.quantity - 1);
-                        return (
-                          <span className="font-semibold mr-4">
-                            ¥{totalPrice.toFixed(2)}
-                          </span>
-                        );
+                        const discountedPrice = Math.max(0, item.price - savings);
+                        
+                        if (item.quantity === 1) {
+                          // 只有一份时，右侧显示划线原价和红色折扣价
+                          return (
+                            <div className="text-right mr-4">
+                              <div className="text-xs text-gray-400 line-through">
+                                ¥{item.price.toFixed(2)}
+                              </div>
+                              <div className="font-semibold text-red-500">
+                                ¥{discountedPrice.toFixed(2)}
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          // 多份时，一份享受折扣，其余按原价计算
+                          const totalPrice = discountedPrice + item.price * (item.quantity - 1);
+                          return (
+                            <span className="font-semibold mr-4">
+                              ¥{totalPrice.toFixed(2)}
+                            </span>
+                          );
+                        }
                       }
                     }
+                    // 默认显示原价
                     return (
                       <span className="font-semibold mr-4">
                         ¥{(item.price * item.quantity).toFixed(2)}
@@ -1085,14 +1105,6 @@ const CartPopup = ({
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* 商品合计 */}
-          <div className="border-t px-4 py-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">商品合计</span>
-              <span className="font-semibold">¥{totalPrice.toFixed(2)}</span>
-            </div>
           </div>
 
           {/* 优惠券部分 */}
@@ -1209,7 +1221,7 @@ const CartPopup = ({
             {selectedCoupon && (
               <div className="mb-3 space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">商品小计</span>
+                  <span className="text-gray-600">商品合计</span>
                   <span>¥{totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
