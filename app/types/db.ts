@@ -12,9 +12,6 @@ export interface CouponTemplate {
   usage_rules: Array<{
     rule_type: 'MINIMUM_SPEND' | 'ITEM_ELIGIBILITY' | 'GIFT_CONDITION';
     params: {
-      amount?: number;
-      items?: Array<{ id: string; name: string }>;
-      categories?: Array<{ id: string; name: string }>;
       required_items?: Array<{ id: string; name: string }>;
       required_categories?: Array<{ id: string; name: string }>;
       min_spend?: number;

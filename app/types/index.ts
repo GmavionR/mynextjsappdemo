@@ -44,8 +44,27 @@ export interface DishBase extends IdName {
   category: string;
 }
 
+// 规格选项接口
+export interface SpecificationOption {
+  name: string;
+  price: number;
+  isDefault?: boolean;
+}
+
+// 规格类别接口
+export interface Specifications {
+  [key: string]: SpecificationOption[];
+}
+
 // 完整菜品信息
 export interface Dish extends DishBase {
+  isSignature?: boolean;
+  promoPrice?: number;
+  discount: string;
+  monthSales: number;
+  rating: number;
+  specifications?: Specifications;
+  isSelectable?: boolean;
   tags?: Tag[];
   description?: string;
 }

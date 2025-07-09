@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dish } from '../stores/dishes';
+import { Dish } from '../types/index';
 import { DishCategoryId } from '../types/constants';
 
 interface UseSearchResult {
