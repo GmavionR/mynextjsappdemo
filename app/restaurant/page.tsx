@@ -26,6 +26,7 @@ import {
   CouponEligibilityResult,
   CouponTemplate,
   UsageRule,
+  VirtualGiftItem,
 } from "../types";
 import { useSearch } from "../hooks/useSearch";
 import SearchModal from "../components/SearchModal";
@@ -373,6 +374,17 @@ const calculateDiscountAmount = (
 
 const menuData = dishesData;
 
+// 根据菜品ID查找菜品信息
+const findDishById = (dishId: string): Dish | null => {
+  for (const categoryDishes of Object.values(menuData)) {
+    const dish = categoryDishes.find((dish: Dish) => dish.id === dishId);
+    if (dish) {
+      return dish;
+    }
+  }
+  return null;
+};
+
 const RestaurantPage = () => {
   const [activeTab, setActiveTab] = useState("点菜");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -455,6 +467,7 @@ const RestaurantPage = () => {
 
   const clearCart = () => {
     setCart([]);
+    setIsCartOpen(false); // 清空购物车时关闭弹窗
   };
 
   const fetchCoupons = async () => {
@@ -491,7 +504,7 @@ const RestaurantPage = () => {
           )}
         </div>
         <CartFooter cart={cart} toggleCart={() => setIsCartOpen(!isCartOpen)} />
-        {isCartOpen && (
+        {isCartOpen && cart.length > 0 && (
           <CartPopup
             cart={cart}
             onClose={() => setIsCartOpen(false)}
@@ -897,6 +910,7 @@ const CartPopup = ({
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [showUnavailableCoupons, setShowUnavailableCoupons] = useState(false);
+  const [showAvailableCoupons, setShowAvailableCoupons] = useState(true); // 默认展开可用优惠券
 
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
   const totalPrice = cart.reduce(
@@ -946,6 +960,34 @@ const CartPopup = ({
     return Math.max(0, totalPrice - eligibility.savings);
   }, [selectedCoupon, totalPrice, cart]);
 
+  // 获取虚拟赠品信息
+  const virtualGiftItem = useMemo((): VirtualGiftItem | null => {
+    if (!selectedCoupon || selectedCoupon.coupon_templates.type !== "FREE_ITEM") {
+      return null;
+    }
+
+    const dishId = selectedCoupon.coupon_templates.value.dish_id;
+    if (!dishId) {
+      return null;
+    }
+
+    const dish = findDishById(dishId);
+    if (!dish) {
+      return null;
+    }
+
+    return {
+      id: dish.id,
+      name: dish.name,
+      price: selectedCoupon.coupon_templates.value.dish_price || 0,
+      image: dish.image,
+      category: dish.category,
+      quantity: 1,
+      isVirtualGift: true,
+      couponId: selectedCoupon.id,
+    };
+  }, [selectedCoupon]);
+
   // 获取优惠券显示信息
   const getCouponDisplayInfo = (coupon: Coupon) => {
     const template = coupon.coupon_templates;
@@ -977,7 +1019,10 @@ const CartPopup = ({
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="font-bold text-lg">已选购商品</h3>
           <button
-            onClick={clearCart}
+            onClick={() => {
+              clearCart();
+              setSelectedCoupon(null); // 清空购物车时同时取消选择的优惠券
+            }}
             className="text-sm text-gray-500 flex items-center"
           >
             <Trash2 className="w-4 h-4 mr-1" />
@@ -1105,6 +1150,72 @@ const CartPopup = ({
                 </div>
               </div>
             ))}
+
+            {/* 虚拟赠品显示 */}
+            {virtualGiftItem && (
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center">
+                  <div className="relative">
+                    <Image
+                      src={
+                        virtualGiftItem.image ||
+                        `https://picsum.photos/seed/${virtualGiftItem.name}/200/300`
+                      }
+                      alt={virtualGiftItem.name}
+                      width={48}
+                      height={48}
+                      className="rounded-md mr-4 w-12 h-12 object-cover"
+                    />
+                    {/* 赠品水印 - 左上角 */}
+                    <div className="absolute -top-1 -left-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center leading-none">
+                      赠品
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{virtualGiftItem.name}</p>
+                    <p className="text-xs text-red-500">优惠券赠品</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  {/* 赠品价格显示：原价划线，赠品价格为0 */}
+                  <div className="text-right mr-4">
+                    {(() => {
+                      // 查找原始菜品获取原价
+                      const originalDish = findDishById(virtualGiftItem.id);
+                      const originalPrice = originalDish?.price || virtualGiftItem.price;
+                      
+                      return (
+                        <>
+                          <div className="text-xs text-gray-400 line-through">
+                            ¥{originalPrice.toFixed(2)}
+                          </div>
+                          <div className="font-semibold text-red-500">
+                            ¥0.00
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className="flex items-center">
+                    {/* 不可点击的减号按钮 */}
+                    <button
+                      disabled
+                      className="bg-gray-100 rounded-full w-6 h-6 flex items-center justify-center cursor-not-allowed opacity-50"
+                    >
+                      -
+                    </button>
+                    <span className="mx-2">1</span>
+                    {/* 不可点击的加号按钮 */}
+                    <button
+                      disabled
+                      className="bg-gray-100 rounded-full w-6 h-6 flex items-center justify-center cursor-not-allowed opacity-50"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 优惠券部分 */}
@@ -1115,41 +1226,71 @@ const CartPopup = ({
               {/* 可用优惠券 */}
               {availableCoupons.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">可使用的优惠券</p>
-                  {availableCoupons.map(({ coupon, savings }) => (
-                    <div
-                      key={coupon.id}
-                      onClick={() =>
-                        setSelectedCoupon(
-                          selectedCoupon?.id === coupon.id ? null : coupon
-                        )
-                      }
-                      className={`p-3 border rounded-lg mb-2 cursor-pointer transition-colors ${
-                        selectedCoupon?.id === coupon.id
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">
-                            {coupon.coupon_templates.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {getCouponDisplayInfo(coupon)}
-                          </p>
-                        </div>
-                        <div className="text-right ml-3">
-                          <p className="text-red-500 font-semibold">
-                            节省¥{savings.toFixed(2)}
-                          </p>
-                          {selectedCoupon?.id === coupon.id && (
-                            <p className="text-xs text-red-500">已选择</p>
-                          )}
-                        </div>
-                      </div>
+                  <button
+                    onClick={() => setShowAvailableCoupons(!showAvailableCoupons)}
+                    className="flex justify-between items-center w-full text-sm text-gray-600 mb-2 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="font-medium">可使用的优惠券 ({availableCoupons.length})</span>
+                    <div className="flex items-center">
+                      <span className="text-xs text-red-500 mr-2">
+                        {availableCoupons.length}张可用
+                      </span>
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          showAvailableCoupons ? "rotate-180" : "rotate-0"
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
                     </div>
-                  ))}
+                  </button>
+                  
+                  {showAvailableCoupons && (
+                    <div className="space-y-2">
+                      {availableCoupons.map(({ coupon, savings }) => (
+                        <div
+                          key={coupon.id}
+                          onClick={() =>
+                            setSelectedCoupon(
+                              selectedCoupon?.id === coupon.id ? null : coupon
+                            )
+                          }
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedCoupon?.id === coupon.id
+                              ? "border-red-500 bg-red-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">
+                                {coupon.coupon_templates.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {getCouponDisplayInfo(coupon)}
+                              </p>
+                            </div>
+                            <div className="text-right ml-3">
+                              <p className="text-red-500 font-semibold">
+                                节省¥{savings.toFixed(2)}
+                              </p>
+                              {selectedCoupon?.id === coupon.id && (
+                                <p className="text-xs text-red-500">已选择</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1160,19 +1301,29 @@ const CartPopup = ({
                     onClick={() =>
                       setShowUnavailableCoupons(!showUnavailableCoupons)
                     }
-                    className="flex justify-between items-center w-full text-sm text-gray-600 mb-2"
+                    className="flex justify-between items-center w-full text-sm text-gray-600 mb-2 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <span>不可使用的优惠券 ({unavailableCoupons.length})</span>
-                    <span
-                      className="transform transition-transform"
-                      style={{
-                        transform: showUnavailableCoupons
-                          ? "rotate(180deg)"
-                          : "rotate(0deg)",
-                      }}
-                    >
-                      ▼
-                    </span>
+                    <span className="font-medium">不可使用的优惠券 ({unavailableCoupons.length})</span>
+                    <div className="flex items-center">
+                      <span className="text-xs text-gray-400 mr-2">
+                        查看详情
+                      </span>
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          showUnavailableCoupons ? "rotate-180" : "rotate-0"
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
                   </button>
 
                   {showUnavailableCoupons && (
